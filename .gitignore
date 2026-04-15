@@ -1,0 +1,54 @@
+# Secrets and local environment files
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Node / PNPM
+node_modules/
+**/node_modules/
+.pnpm-store/
+.npm/
+.turbo/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Next.js / frontend build output
+.next/
+**/.next/
+out/
+build/
+dist/
+**/build/
+**/dist/
+coverage/
+*.tsbuildinfo
+packages/shared/src/*.js
+packages/shared/src/*.d.ts
+packages/shared/src/*.map
+
+# Python
+.venv/
+**/.venv/
+venv/
+__pycache__/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.py[cod]
+
+# Foundry / Solidity build artifacts
+contracts/cache/
+contracts/out/
+contracts/broadcast/
+
+# Misc local files
+.DS_Store
+.idea/
+.vscode/

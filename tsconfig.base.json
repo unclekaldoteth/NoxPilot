@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "allowJs": false,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "@noxpilot/shared": ["packages/shared/src/index.ts"],
+      "@noxpilot/nox-sdk": ["packages/nox-sdk/src/index.ts"],
+      "@noxpilot/ui": ["packages/ui/src/index.tsx"]
+    }
+  }
+}
