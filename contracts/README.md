@@ -12,6 +12,8 @@ The `contracts/` package is Foundry-based and targets Arbitrum Sepolia by defaul
   Minimal Foundry deploy script that reads deploy settings from environment variables and wires the vault to the guard.
 - `script/DeployWrappers.s.sol`
   Wrapper-only deploy script that targets an existing `ExecutionGuard`, deploys missing `NoxPilotConfidentialERC20Wrapper` instances, and registers them without redeploying the vault or guard.
+- `script/BootstrapArbExecutionLane.s.sol`
+  Deploys a demo ARB token, deploys/registers its confidential wrapper on the existing `ExecutionGuard`, swaps wrapped native test ETH into the configured session USDC, and seeds a Uniswap V3 `ARB/USDC` pool for the ARB execution lane.
 
 ## Prerequisites
 
@@ -136,6 +138,73 @@ After wrapper deployment, copy the emitted wrapper addresses into:
 - `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS`
 - `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
 - `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS`
+
+## Bootstrap The ARB Execution Lane
+
+Use this path only when ARB is not yet executable because Arbitrum Sepolia does not already have a suitable `ARB/USDC` pool for the configured router/quoter/session-asset path.
+
+What it does:
+
+- deploys `DemoArbToken` with symbol `ARB`
+- deploys `NoxPilotConfidentialERC20Wrapper` for that token
+- registers the wrapper on the existing `ExecutionGuard`
+- uses a configurable slice of the owner's existing session `USDC` balance as LP seed
+- seeds a Uniswap V3 `ARB/USDC` pool at the configured fee tier through `NonfungiblePositionManager`
+
+Required env additions:
+
+- `EXECUTION_GUARD_ADDRESS`
+- `SESSION_ASSET_ADDRESS`
+- `DEFAULT_POOL_FEE`
+
+Optional env tuning:
+
+- `ARB_BOOTSTRAP_POSITION_MANAGER_ADDRESS`
+- `ARB_BOOTSTRAP_SESSION_ASSET_SEED_AMOUNT`
+- `ARB_BOOTSTRAP_USDC_E6_PER_ARB`
+
+Command:
+
+```bash
+cd contracts
+set -a
+source .env
+set +a
+forge script script/BootstrapArbExecutionLane.s.sol:BootstrapArbExecutionLane \
+  --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" \
+  --broadcast \
+  -vv
+```
+
+Important:
+
+- this path creates a testnet demo ARB market lane; it is not an official bridged ARB deployment
+- the resulting `TOKEN_ARB_ADDRESS` should be copied into the app env after broadcast
+- the resulting ARB wrapper address should be copied into `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
+- the wallet must already hold Arbitrum Sepolia test `USDC`, because the script no longer performs a fragile testnet seed swap
+- `ARB_BOOTSTRAP_SESSION_ASSET_SEED_AMOUNT` should stay below the wallet's available `USDC` balance so some session funding remains after pool bootstrap
+
+## Current Live Arbitrum Sepolia Deployment
+
+Snapshot updated April 17, 2026:
+
+- `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
+- `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
+- `DemoArbToken (ARB)`: `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E`
+- `ARB/USDC pool`: `0xB85cf4A6d305e8c19eC476C3187db949D665C43b`
+- `NoxPilotConfidentialERC20Wrapper (WETH)`: `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9`
+- `NoxPilotConfidentialERC20Wrapper (ARB)`: `0x18C35645080A279170471b0bfCbD888946F3D674`
+- `NoxPilotConfidentialERC20Wrapper (LINK)`: `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5`
+
+Broadcast hashes:
+
+- bootstrap vault: `0x52e15041c72a306c06a001c23006ee56e04c6747eda771de611d28e1ce015168`
+- bootstrap guard: `0xab5ccc34303387e451467b1ef78803f3c34b30ba850b86c95406b1b095cedece`
+- WETH wrapper deploy: `0x0923c184c0e234ef9208995df7ef9d7a5fb9c285854e3d71f6ef767db4089bd4`
+- LINK wrapper deploy: `0x1092421f11bff12b10355334a706f98ec6509b47617760b0f235e975a368331a`
+- ARB token deploy: `0x384856dca11e7bb92ae11f474b37778c9fcfcec66c8c938bd1f715fd29df6233`
+- ARB wrapper deploy: `0xafba4d8efd8adc4d591410d3d4afe9c5dc2539ee5cd64bbb5a9ffaadb477b020`
+- ARB bootstrap pool seed + mint sequence: `0x508898f40067eb8c2caac257e597e5a1257f7c57b890892193c328c61f608b0c`
 
 ## Required Environment Variables
 

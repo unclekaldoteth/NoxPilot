@@ -13,7 +13,7 @@ The judged/demo path is now live by default:
 - wallet-backed Nox Handle encryption
 - live FastAPI research responses
 - live fetched market inputs
-- real on-chain session open / guarded swap execution / settlement sweep
+- real on-chain session open / guarded swap execution / confidential wrap / owner reveal / settlement sweep
 
 ## Why Hybrid
 
@@ -68,9 +68,18 @@ Required live env values:
 - `NEXT_PUBLIC_DEX_QUOTER_ADDRESS`
 - `NEXT_PUBLIC_SESSION_ASSET_ADDRESS`
 - `NEXT_PUBLIC_TOKEN_ETH_ADDRESS`
-- `NEXT_PUBLIC_TOKEN_ARB_ADDRESS`
 - `NEXT_PUBLIC_TOKEN_LINK_ADDRESS`
 - `NEXT_PUBLIC_NOX_APPLICATION_CONTRACT_ADDRESS`
+
+Required live env values for the confidential wrap path:
+
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS`
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS`
+
+Optional expansion values:
+
+- `NEXT_PUBLIC_TOKEN_ARB_ADDRESS`
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
 
 Optional Nox override values:
 
@@ -105,6 +114,35 @@ set +a
 forge script script/Deploy.s.sol:Deploy --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" --broadcast -vv
 ```
 
+If the vault and guard are already live and you only want to add confidential wrappers:
+
+```bash
+cd contracts
+set -a
+source .env
+set +a
+forge script script/DeployWrappers.s.sol:DeployWrappers --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" --broadcast -vv
+```
+
+## Current Live Arbitrum Sepolia Deployment
+
+Snapshot updated April 17, 2026:
+
+- `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
+- `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
+- `DemoArbToken (ARB)`: `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E`
+- `ARB/USDC pool`: `0xB85cf4A6d305e8c19eC476C3187db949D665C43b`
+- `NoxPilotConfidentialERC20Wrapper (WETH)`: `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9`
+- `NoxPilotConfidentialERC20Wrapper (ARB)`: `0x18C35645080A279170471b0bfCbD888946F3D674`
+- `NoxPilotConfidentialERC20Wrapper (LINK)`: `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5`
+
+Current full confidential path coverage:
+
+- WETH: live
+- LINK: live
+- ARB: live
+- Base / BNB / Solana discovery: research-only
+
 ### 5. Start the web app
 
 ```bash
@@ -123,8 +161,10 @@ pnpm dev:web
 8. Click `Open bounded session on-chain`.
 9. Optionally switch to the registered execution wallet if you want to demonstrate delegated execution instead of owner-driven execution.
 10. Click `Execute bounded live swap`.
-11. Click `Settle session on-chain`.
-12. Optionally click `Pause system` or `Revoke execution session`.
+11. Click `Wrap acquired ERC-20`.
+12. Click `Reveal confidential balance`.
+13. Click `Settle session on-chain`.
+14. Optionally unwrap or click `Pause system` / `Revoke execution session`.
 
 ## What Is Real vs Limited
 
@@ -132,13 +172,15 @@ Fully live in the default judged path:
 
 - wallet connection and network verification
 - contract reads from `PolicyVault` and `ExecutionGuard`
-- contract writes for topology init, policy save, session open, guarded swap execution, settlement, and pause
+- contract writes for topology init, policy save, session open, guarded swap execution, post-buy wrapping, settlement, and pause
 - Nox handle encryption through a wallet-backed TS client
 - on-chain validation of the confidential daily-budget and min-confidence handles through `PolicyVault.updatePolicyWithNox()`
 - FastAPI `/health`, `/research/rank`, and `/research/explain`
 - live market data fetched by the Python agent from CoinGecko markets
 - real session-asset funding into `ExecutionGuard`
 - real exact-input guarded swap execution through the configured router
+- real post-buy confidential wrapping for supported live tokens
+- real owner reveal through the Nox handle client after wrapping
 - real settlement sweeps back to the vault owner
 - dashboard state derived from live wallet + contract + agent responses
 - timeline entries created only from successful live actions or live agent responses
@@ -161,11 +203,13 @@ Dev-only fallback:
 - MetaMask or another injected wallet
 - Arbitrum Sepolia selected in the wallet
 - deployed `PolicyVault` and `ExecutionGuard`
+- deployed concrete confidential wrapper for the selected ERC-20
 - configured router, quoter, session-asset, and token addresses
 - the connected wallet must be the `PolicyVault.owner()` and `ExecutionGuard.admin()`
 - after session funding, you may switch to the registered `executionWallet()` to demonstrate delegated execution and settlement without changing the configured topology
 - `NEXT_PUBLIC_NOX_APPLICATION_CONTRACT_ADDRESS` must point to the live application contract used by the Handle client
 - Python agent must be running at `NEXT_PUBLIC_AGENT_BASE_URL`
+- today, the full live confidential path is configured for WETH, ARB, and LINK
 
 ### Market Data Dependency
 
@@ -183,6 +227,7 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - The execution flow prepares a confidential confidence-approval handle before the swap and only proceeds after the live Handle gateway returns a valid boolean proof.
 - The research card shows live source metadata and live market numbers.
 - Session funding, swap execution, and settlement each require real Arbitrum Sepolia transactions.
+- Wrapping and owner reveal require a deployed live wrapper and a real Nox handle operation.
 - The activity timeline stays empty until real actions or live agent responses occur.
 
 ## NO MOCKED DATA VALIDATION CHECKLIST
@@ -198,6 +243,8 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - [ ] `Evaluate live decision` uses the live recommendation and current session state.
 - [ ] `Open bounded session on-chain` produces a real transaction.
 - [ ] `Execute bounded live swap` produces a real transaction.
+- [ ] `Wrap acquired ERC-20` produces a real transaction.
+- [ ] `Reveal confidential balance` succeeds through the live Nox handle client.
 - [ ] `Settle session on-chain` produces a real transaction.
 - [ ] Timeline entries correspond only to those live actions or live agent responses.
 

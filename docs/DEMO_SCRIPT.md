@@ -11,12 +11,27 @@ Before presenting:
 - confirm the connected wallet is the `PolicyVault` owner and `ExecutionGuard` admin
 - confirm public Nox env values are present in `apps/web/.env.local`
 - confirm the selected token has route, allowlist, and wrapper config
+- for the current live deployment, use WETH, ARB, or LINK for the full confidential path
 
 Open:
 
 - `/`
 - `/dashboard`
 - `/demo`
+
+## Current Live Deployment
+
+Arbitrum Sepolia snapshot updated April 17, 2026:
+
+- `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
+- `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
+- Demo ARB token: `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E`
+- ARB/USDC pool: `0xB85cf4A6d305e8c19eC476C3187db949D665C43b`
+- WETH wrapper: `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9`
+- ARB wrapper: `0x18C35645080A279170471b0bfCbD888946F3D674`
+- LINK wrapper: `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5`
+
+For a fully live wrap-and-reveal demo today, you can use WETH, ARB, or LINK.
 
 ## 3-5 Minute Script
 
@@ -116,6 +131,7 @@ Say:
 - wallet connected on Arbitrum Sepolia
 - live `PolicyVault` and `ExecutionGuard`
 - live concrete wrapper for the selected ERC-20
+- the current live wrapper set covers WETH, ARB, and LINK
 - public Nox Handle env configured
 - FastAPI agent running
 - live market-data providers reachable from the Python agent runtime

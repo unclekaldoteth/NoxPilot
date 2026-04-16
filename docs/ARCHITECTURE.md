@@ -11,6 +11,20 @@ NoxPilot has four execution domains:
 
 The v1 product path is intentionally narrow: discover and research a token, execute one bounded ERC-20 buy on Arbitrum Sepolia, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
 
+## Current Live Deployment
+
+Arbitrum Sepolia snapshot updated April 17, 2026:
+
+- `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
+- `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
+- Demo ARB token: `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E`
+- ARB/USDC pool: `0xB85cf4A6d305e8c19eC476C3187db949D665C43b`
+- WETH wrapper: `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9`
+- ARB wrapper: `0x18C35645080A279170471b0bfCbD888946F3D674`
+- LINK wrapper: `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5`
+
+As deployed today, the full live confidential execution path is available for WETH, ARB, and LINK.
+
 ## Trust Boundary
 
 The core trust model is unchanged:
@@ -146,6 +160,7 @@ The confidential asset path begins after the public swap. The wrapper deposit is
 - the live trading path is intentionally one exact-input swap route, not a generic DEX aggregation engine
 - only the daily-budget and min-confidence policy fields are validated through the Nox proof path on-chain
 - v1 confidential wrapping is Arbitrum Sepolia-only
+- the currently deployed live wrapper set is WETH and LINK; ARB is still unset
 - Base and BNB remain future execution expansion until official NoxCompute, gateway, subgraph, Solidity SDK resolver, contract deployment, router, and token allowlist support are available
 - Solana remains research-only unless a separate Solana wallet, program, routing, and confidential execution path is built
 - the first acquired amount may be observable from public swap and wrapper transactions
@@ -162,6 +177,7 @@ That is smaller than a full trading stack, but it is real and aligned with the p
 - deployed `PolicyVault`
 - deployed `ExecutionGuard`
 - deployed concrete confidential wrapper for the selected ERC-20
+- today, that means WETH, ARB, or LINK on the live deployment
 - public Nox application-contract config
 - running FastAPI agent
 - live market-data reachability
