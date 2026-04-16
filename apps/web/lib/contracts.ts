@@ -42,6 +42,7 @@ export const policyVaultAbi = parseAbi([
 
 export const executionGuardAbi = parseAbi([
   "function admin() view returns (address)",
+  "function registerAdmin(address newAdmin)",
   "function policyVault() view returns (address)",
   "function sessionAsset() view returns (address)",
   "function swapRouter() view returns (address)",
@@ -50,20 +51,29 @@ export const executionGuardAbi = parseAbi([
   "function syncedWhitelistRoot() view returns (bytes32)",
   "function lastExecutionAt() view returns (uint256)",
   "function lastSettlementAt() view returns (uint256)",
+  "function lastWrapAt() view returns (uint256)",
   "function lastSwapToken() view returns (address)",
   "function lastAmountIn() view returns (uint256)",
   "function lastAmountOut() view returns (uint256)",
+  "function lastWrapToken() view returns (address)",
+  "function lastWrapWrapper() view returns (address)",
+  "function lastWrapAmount() view returns (uint256)",
+  "function lastWrapAmountHandle() view returns (bytes32)",
+  "function lastWrapBalanceHandle() view returns (bytes32)",
   "function pendingConfidenceApprovalHandles(address) view returns (bytes32)",
   "function pendingConfidenceObserved(address) view returns (uint256)",
   "function allowedTokenHashes(bytes32) view returns (bool)",
   "function allowedTokenAddresses(address) view returns (bool)",
+  "function confidentialWrappers(address) view returns (address)",
   "function previewExecution(bytes32 tokenHash, address caller, uint256 spendAmountUsd, uint256 observedConfidence) view returns (bool allowed, string reason)",
   "function syncPolicyWhitelistRoot() returns (bytes32 whitelistRoot)",
   "function setAllowedToken(bytes32 tokenHash, bool allowed)",
   "function setAllowedTokenAddress(address tokenAddress, bool allowed)",
+  "function setConfidentialWrapper(address tokenAddress, address wrapper, bool allowed)",
   "function fundSessionAsset(uint256 amount, bytes32 fundingRef)",
   "function prepareConfidenceApproval(uint256 observedConfidence) returns (bytes32 approvalHandle)",
   "function executeExactInputSingle(bytes32 tokenHash, address tokenOut, uint24 poolFee, uint256 amountIn, uint256 amountOutMinimum, uint256 spendAmountUsd, uint256 observedConfidence, bytes confidenceApprovalProof, bytes32 executionRef) returns (uint256 amountOut)",
+  "function wrapLastOutput(address tokenOut, uint256 amount, bytes32 wrapRef) returns (bytes32 amountHandle, bytes32 balanceHandle)",
   "function settleSessionAssets(address[] tokensToSweep, uint256 returnedAmountUsd, bytes32 settlementRef)",
   "function recordExecution(bytes32 tokenHash, uint256 spendAmountUsd, uint256 observedConfidence, bytes confidenceApprovalProof, bytes32 executionRef) returns (bool)",
   "function recordSettlement(uint256 returnedAmountUsd, bytes32 settlementRef)"
@@ -77,6 +87,15 @@ export const erc20Abi = parseAbi([
 
 export const quoterV2Abi = parseAbi([
   "function quoteExactInputSingle((address tokenIn,address tokenOut,uint256 amountIn,uint24 fee,uint160 sqrtPriceLimitX96) params) returns (uint256 amountOut,uint160 sqrtPriceX96After,uint32 initializedTicksCrossed,uint256 gasEstimate)"
+]);
+
+export const confidentialWrapperAbi = parseAbi([
+  "function underlying() view returns (address)",
+  "function confidentialBalanceHandleOf(address account) view returns (bytes32)",
+  "function confidentialTotalSupplyHandle() view returns (bytes32)",
+  "function wrap(address to, uint256 amount) returns (bytes32)",
+  "function unwrap(address from, address to, bytes32 amount) returns (bytes32 unwrapRequestId)",
+  "function finalizeUnwrap(bytes32 unwrapRequestId, bytes decryptedAmountAndProof)"
 ]);
 
 export type PolicyRefs = {
@@ -99,6 +118,15 @@ export type SessionSnapshot = {
   fundedAmountUsd: bigint;
   spentAmountUsd: bigint;
   settledAmountUsd: bigint;
+};
+
+export type GuardWrapSnapshot = {
+  lastWrapAt: bigint;
+  lastWrapToken: Address;
+  lastWrapWrapper: Address;
+  lastWrapAmount: bigint;
+  lastWrapAmountHandle: Hex;
+  lastWrapBalanceHandle: Hex;
 };
 
 export type PolicyMetadata = {

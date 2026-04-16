@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import asyncio
+import os
+
 from schemas import Recommendation, ResearchExplainResponse
 from services.chaingpt import ChainGPTUnavailable, chaingpt_configured, explain_with_chaingpt
 
 
 LOCAL_EXPLAINER_PROVIDER = "Local deterministic explainer"
+CHAINGPT_ANALYST_BUDGET_SECONDS = float(os.getenv("CHAINGPT_ANALYST_BUDGET_SECONDS", "7"))
 
 
 def explain_recommendation(
@@ -57,8 +61,11 @@ async def explain_recommendation_with_chain_gpt(
         return explain_recommendation(recommendation, min_confidence, allowed_protocol)
 
     try:
-        return await explain_with_chaingpt(recommendation, min_confidence, allowed_protocol)
-    except ChainGPTUnavailable:
+        return await asyncio.wait_for(
+            explain_with_chaingpt(recommendation, min_confidence, allowed_protocol),
+            timeout=CHAINGPT_ANALYST_BUDGET_SECONDS,
+        )
+    except (ChainGPTUnavailable, TimeoutError):
         fallback = explain_recommendation(recommendation, min_confidence, allowed_protocol)
         fallback.checks.append("ChainGPT analyst layer was unavailable, so NoxPilot returned the local deterministic explanation.")
         return fallback

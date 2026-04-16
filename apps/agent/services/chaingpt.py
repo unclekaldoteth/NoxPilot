@@ -11,7 +11,7 @@ from schemas import Recommendation, ResearchExplainResponse
 
 CHAINGPT_BASE_URL = os.getenv("CHAINGPT_BASE_URL", "https://api.chaingpt.org").rstrip("/")
 CHAINGPT_MODEL = os.getenv("CHAINGPT_MODEL", "general_assistant")
-CHAINGPT_TIMEOUT_SECONDS = float(os.getenv("CHAINGPT_TIMEOUT_SECONDS", "20"))
+CHAINGPT_TIMEOUT_SECONDS = float(os.getenv("CHAINGPT_TIMEOUT_SECONDS", "6"))
 CHAINGPT_PROVIDER_LABEL = "ChainGPT Web3 LLM"
 
 
@@ -191,15 +191,18 @@ async def explain_with_chaingpt(
         },
     }
 
-    async with httpx.AsyncClient(timeout=CHAINGPT_TIMEOUT_SECONDS) as client:
-        response = await client.post(
-            f"{CHAINGPT_BASE_URL}/chat/stream",
-            headers={
-                "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json",
-            },
-            json=request_payload,
-        )
+    try:
+        async with httpx.AsyncClient(timeout=CHAINGPT_TIMEOUT_SECONDS) as client:
+            response = await client.post(
+                f"{CHAINGPT_BASE_URL}/chat/stream",
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                },
+                json=request_payload,
+            )
+    except httpx.HTTPError as error:
+        raise ChainGPTUnavailable("ChainGPT network request failed.") from error
 
     if response.status_code in {401, 402, 403}:
         raise ChainGPTUnavailable("ChainGPT authentication or credits are unavailable.")

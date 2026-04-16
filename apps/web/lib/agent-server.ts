@@ -1,7 +1,7 @@
 export type AgentResponseSource = "agent" | "mock";
-export type AgentFailureReason = "not-configured" | "unreachable" | "invalid-response";
+export type AgentFailureReason = "not-configured" | "unreachable" | "invalid-response" | "timeout";
 
-const AGENT_TIMEOUT_MS = 8000;
+const AGENT_TIMEOUT_MS = 12000;
 
 export function resolveAgentBaseUrl() {
   const candidate =
@@ -63,12 +63,17 @@ export async function fetchAgentJson(path: string, body: unknown) {
       ok: true as const,
       payload: await response.json()
     };
-  } catch {
+  } catch (error) {
+    const message =
+      error instanceof Error && error.name === "AbortError"
+        ? "Research agent request timed out."
+        : "Research agent is unreachable.";
+
     return {
       ok: false as const,
-      reason: "unreachable" as const,
+      reason: error instanceof Error && error.name === "AbortError" ? ("timeout" as const) : ("unreachable" as const),
       status: 503,
-      message: "Research agent is unreachable.",
+      message,
       payload: null
     };
   } finally {

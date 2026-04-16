@@ -8,13 +8,22 @@ import {
   useState,
   type PropsWithChildren
 } from "react";
-import { createNoxClient, encryptBool, encryptUint256, publicDecryptHandle } from "@noxpilot/nox-sdk";
 import {
+  createNoxClient,
+  decryptHandle,
+  encryptBool,
+  encryptUint256,
+  getHandleAcl,
+  publicDecryptHandle
+} from "@noxpilot/nox-sdk";
+import {
+  mockConfidentialPosition,
   demoExecutionState,
   demoVaultState,
   mockRecommendation,
   type ActivityItem,
   type AppMode,
+  type ConfidentialPosition,
   type EncryptedPolicyPayload,
   type ExecutionDecision,
   type ExecutionWalletState,
@@ -33,6 +42,7 @@ import {
   buildEncryptedPolicyFromChain,
   computeWhitelistRoot,
   createExecutionReference,
+  confidentialWrapperAbi,
   describeWriteAction,
   erc20Abi,
   encodePolicyMetadata,
@@ -48,11 +58,13 @@ import {
   toPolicyRefs,
   toSessionSnapshot
 } from "@/lib/contracts";
+import { getConfidentialWrapperSupport } from "@/lib/confidential-assets";
 import {
   getConfiguredDemoTokens,
   getDefaultPoolFee,
   getDexQuoterAddress,
   getDexRouterAddress,
+  maybeGetTokenConfigByAddress,
   getSessionAssetConfig,
   getTokenConfig,
   tokenUnitsToNumber,
@@ -65,6 +77,9 @@ import { fetchMarketSnapshot } from "@/lib/research";
 type WalletSource = "mock" | "live" | "disconnected";
 type ResearchSource = "agent" | "mock" | null;
 type FundingStage = "idle" | "opening-session" | "approving-asset" | "funding-guard" | "ready";
+type WrapStage = "idle" | "wrapping" | "wrapped";
+type RevealStage = "idle" | "revealing";
+type UnwrapStage = "idle" | "requesting" | "finalizing";
 
 type AppStateContextValue = {
   mode: AppMode;
@@ -92,6 +107,7 @@ type AppStateContextValue = {
   recommendation: Recommendation | null;
   decision: ExecutionDecision | null;
   settlement: SettlementResult | null;
+  confidentialPosition: ConfidentialPosition | null;
   activity: ActivityItem[];
   lastError: string | null;
   /* Loading states for visual feedback */
@@ -101,6 +117,12 @@ type AppStateContextValue = {
   isFunding: boolean;
   fundingStage: FundingStage;
   isExecuting: boolean;
+  isWrapping: boolean;
+  wrapStage: WrapStage;
+  isRevealing: boolean;
+  revealStage: RevealStage;
+  isUnwrapping: boolean;
+  unwrapStage: UnwrapStage;
   isSettling: boolean;
   isPausing: boolean;
   setMode: (mode: AppMode) => void;
@@ -112,6 +134,9 @@ type AppStateContextValue = {
   evaluateDecision: () => ExecutionDecision;
   fundExecutionWallet: () => Promise<void>;
   executeTrade: () => Promise<void>;
+  wrapAcquiredPosition: () => Promise<void>;
+  revealConfidentialBalance: () => Promise<void>;
+  unwrapConfidentialPosition: () => Promise<void>;
   settleToVault: () => Promise<void>;
   togglePause: () => Promise<void>;
   revokeSession: () => Promise<void>;
@@ -153,6 +178,46 @@ function normalizeActivity(current: ActivityItem[], item: ActivityItem) {
   return [item, ...current].slice(0, 20);
 }
 
+function isZeroHex(value: string | null | undefined) {
+  return !value || /^0x0{40,64}$/i.test(value);
+}
+
+function formatPublicAmount(amount: bigint, decimals: number) {
+  const numeric = tokenUnitsToNumber(amount, decimals);
+  return numeric.toFixed(6).replace(/\.?0+$/, "");
+}
+
+function buildConfidentialPosition(input: {
+  symbol: string;
+  address: string;
+  wrapperAddress: string | null;
+  publicAmount: string | null;
+  chainId: number;
+  encryptedAmountHandle: string | null;
+  encryptedBalanceHandle: string | null;
+  wrapTxHash: string | null;
+  status: ConfidentialPosition["status"];
+  previous?: ConfidentialPosition | null;
+}): ConfidentialPosition {
+  return {
+    underlyingSymbol: input.symbol,
+    underlyingAddress: input.address,
+    wrapperAddress: input.wrapperAddress,
+    chainId: input.chainId,
+    publicAmount: input.publicAmount,
+    encryptedAmountHandle: input.encryptedAmountHandle,
+    encryptedBalanceHandle: input.encryptedBalanceHandle,
+    wrapTxHash: input.wrapTxHash ?? input.previous?.wrapTxHash ?? null,
+    unwrapRequestHandle: input.previous?.unwrapRequestHandle ?? null,
+    unwrapTxHash: input.previous?.unwrapTxHash ?? null,
+    finalizeUnwrapTxHash: input.previous?.finalizeUnwrapTxHash ?? null,
+    viewerAclState: input.previous?.viewerAclState ?? null,
+    decryptedBalance: input.previous?.decryptedBalance ?? null,
+    revealError: input.previous?.revealError ?? null,
+    status: input.status
+  };
+}
+
 export function AppStateProvider({ children }: PropsWithChildren) {
   const defaultMode: AppMode =
     publicEnv.NEXT_PUBLIC_APP_MODE === "mock" && devMocksEnabled ? "mock" : "live";
@@ -174,6 +239,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const [lastExecutedSymbol, setLastExecutedSymbol] = useState<string | null>(null);
   const [decision, setDecision] = useState<ExecutionDecision | null>(null);
   const [settlement, setSettlement] = useState<SettlementResult | null>(null);
+  const [confidentialPosition, setConfidentialPosition] = useState<ConfidentialPosition | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
   const [topologyReady, setTopologyReady] = useState(defaultMode === "mock");
@@ -184,6 +250,12 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const [isFunding, setIsFunding] = useState(false);
   const [fundingStage, setFundingStage] = useState<FundingStage>("idle");
   const [isExecuting, setIsExecuting] = useState(false);
+  const [isWrapping, setIsWrapping] = useState(false);
+  const [wrapStage, setWrapStage] = useState<WrapStage>("idle");
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [revealStage, setRevealStage] = useState<RevealStage>("idle");
+  const [isUnwrapping, setIsUnwrapping] = useState(false);
+  const [unwrapStage, setUnwrapStage] = useState<UnwrapStage>("idle");
   const [isSettling, setIsSettling] = useState(false);
   const [isPausing, setIsPausing] = useState(false);
   const config = useConfig();
@@ -213,7 +285,11 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     setLastExecutedSymbol(null);
     setDecision(null);
     setSettlement(null);
+    setConfidentialPosition(null);
     setFundingStage("idle");
+    setWrapStage("idle");
+    setRevealStage("idle");
+    setUnwrapStage("idle");
     setHasUsedSafetyControl(false);
   }
 
@@ -475,6 +551,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     if (!walletConnected || !address || !publicClient) {
       setVault(createEmptyVault(address ?? null, chainId || SUPPORTED_CHAIN_ID));
       setExecutionWallet(createEmptyExecutionWallet());
+      setConfidentialPosition(null);
       setSystemPaused(false);
       setTopologyReady(false);
       setFundingStage("idle");
@@ -484,6 +561,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     if (!networkSupported || !liveConfigReady) {
       setVault(createEmptyVault(address, chainId || SUPPORTED_CHAIN_ID));
       setExecutionWallet(createEmptyExecutionWallet());
+      setConfidentialPosition(null);
       setTopologyReady(false);
       setFundingStage("idle");
       return;
@@ -610,7 +688,19 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         abi: executionGuardAbi,
         functionName: "policyVault"
       })) as `0x${string}`;
-      const [guardAdmin, guardSessionAsset, guardSwapRouter, guardPoolFee] = await Promise.all([
+      const [
+        guardAdmin,
+        guardSessionAsset,
+        guardSwapRouter,
+        guardPoolFee,
+        guardLastSwapToken,
+        guardLastAmountOut,
+        guardLastWrapToken,
+        guardLastWrapWrapper,
+        guardLastWrapAmount,
+        guardLastWrapAmountHandle,
+        guardLastWrapBalanceHandle
+      ] = await Promise.all([
         publicClient.readContract({
           address: executionGuardAddress,
           abi: executionGuardAbi,
@@ -630,7 +720,42 @@ export function AppStateProvider({ children }: PropsWithChildren) {
           address: executionGuardAddress,
           abi: executionGuardAbi,
           functionName: "defaultPoolFee"
-        }) as Promise<number>
+        }) as Promise<number>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastSwapToken"
+        }) as Promise<`0x${string}`>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastAmountOut"
+        }) as Promise<bigint>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastWrapToken"
+        }) as Promise<`0x${string}`>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastWrapWrapper"
+        }) as Promise<`0x${string}`>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastWrapAmount"
+        }) as Promise<bigint>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastWrapAmountHandle"
+        }) as Promise<`0x${string}`>,
+        publicClient.readContract({
+          address: executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "lastWrapBalanceHandle"
+        }) as Promise<`0x${string}`>
       ]);
 
       if (guardPolicyVault.toLowerCase() !== policyVaultAddress.toLowerCase()) {
@@ -655,6 +780,64 @@ export function AppStateProvider({ children }: PropsWithChildren) {
           operatorMatchesContracts &&
           executionController.toLowerCase() === executionGuardAddress.toLowerCase()
       );
+
+      const wrappedTokenConfig =
+        !isZeroHex(guardLastWrapToken) ? maybeGetTokenConfigByAddress(guardLastWrapToken) : null;
+      const swappedTokenConfig =
+        !isZeroHex(guardLastSwapToken) ? maybeGetTokenConfigByAddress(guardLastSwapToken) : null;
+
+      if (
+        wrappedTokenConfig &&
+        !isZeroHex(guardLastWrapBalanceHandle) &&
+        !isZeroHex(guardLastWrapWrapper)
+      ) {
+        setConfidentialPosition((current) =>
+          buildConfidentialPosition({
+            symbol: wrappedTokenConfig.symbol,
+            address: wrappedTokenConfig.address,
+            wrapperAddress: guardLastWrapWrapper,
+            publicAmount:
+              guardLastWrapAmount > 0n
+                ? formatPublicAmount(guardLastWrapAmount, wrappedTokenConfig.decimals)
+                : current?.publicAmount ?? null,
+            chainId: chainId || SUPPORTED_CHAIN_ID,
+            encryptedAmountHandle: guardLastWrapAmountHandle,
+            encryptedBalanceHandle: guardLastWrapBalanceHandle,
+            wrapTxHash: current?.wrapTxHash ?? null,
+            status:
+              current?.status === "revealed"
+                ? "revealed"
+                : current?.status === "unwrapped"
+                  ? "unwrapped"
+                  : current?.status === "unwrap_pending"
+                    ? "unwrap_pending"
+                    : current?.status === "reveal_failed"
+                      ? "reveal_failed"
+                      : "wrapped",
+            previous: current
+          })
+        );
+      } else if (swappedTokenConfig && guardLastAmountOut > 0n) {
+        const wrapperSupport = getConfidentialWrapperSupport(swappedTokenConfig.symbol, chainId || SUPPORTED_CHAIN_ID);
+        setConfidentialPosition((current) =>
+          buildConfidentialPosition({
+            symbol: swappedTokenConfig.symbol,
+            address: swappedTokenConfig.address,
+            wrapperAddress: wrapperSupport.wrapperAddress,
+            publicAmount: formatPublicAmount(guardLastAmountOut, swappedTokenConfig.decimals),
+            chainId: chainId || SUPPORTED_CHAIN_ID,
+            encryptedAmountHandle: null,
+            encryptedBalanceHandle: null,
+            wrapTxHash: current?.wrapTxHash ?? null,
+            status: wrapperSupport.supported ? "not_wrapped" : "missing_wrapper",
+            previous: current
+          })
+        );
+      } else {
+        setConfidentialPosition((current) =>
+          current?.status === "unwrapped" ? current : null
+        );
+      }
     } catch (error) {
       setTopologyReady(false);
       const message = error instanceof Error ? error.message : "Unable to refresh live contract state.";
@@ -770,6 +953,48 @@ export function AppStateProvider({ children }: PropsWithChildren) {
             "success",
             "Topology verified on-chain",
             "PolicyVault ownership, execution wallet registration, and ExecutionGuard wiring already match the live demo requirements."
+          )
+        );
+      }
+
+      const wrapperUpdates: string[] = [];
+      for (const token of getConfiguredDemoTokens()) {
+        const support = getConfidentialWrapperSupport(token.symbol, SUPPORTED_CHAIN_ID);
+        const currentWrapper = (await live.publicClient.readContract({
+          address: live.executionGuardAddress,
+          abi: executionGuardAbi,
+          functionName: "confidentialWrappers",
+          args: [token.address]
+        })) as `0x${string}`;
+
+        if (support.supported && support.wrapperAddress && currentWrapper.toLowerCase() !== support.wrapperAddress.toLowerCase()) {
+          const { txHash } = await sendWrite({
+            contractAddress: live.executionGuardAddress,
+            abi: executionGuardAbi,
+            functionName: "setConfidentialWrapper",
+            args: [token.address, support.wrapperAddress, true]
+          });
+          wrapperUpdates.push(txHash);
+        }
+
+        if (!support.supported && !isZeroHex(currentWrapper)) {
+          const { txHash } = await sendWrite({
+            contractAddress: live.executionGuardAddress,
+            abi: executionGuardAbi,
+            functionName: "setConfidentialWrapper",
+            args: [token.address, "0x0000000000000000000000000000000000000000", false]
+          });
+          wrapperUpdates.push(txHash);
+        }
+      }
+
+      if (wrapperUpdates.length > 0) {
+        appendActivity(
+          createActivity(
+            "operator",
+            "success",
+            "Confidential wrappers synced",
+            `Updated ${wrapperUpdates.length} wrapper mapping${wrapperUpdates.length === 1 ? "" : "s"} on ExecutionGuard.`
           )
         );
       }
@@ -937,6 +1162,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         ...sanitizedPolicy.allowedTokens
       ]);
       const allowlistTxHashes: string[] = [];
+      const wrapperTxHashes: string[] = [];
 
       for (const symbol of tokenUniverse) {
         let configuredToken;
@@ -948,8 +1174,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
 
         const desiredAllowed = sanitizedPolicy.allowedTokens.includes(symbol);
         const symbolHash = tokenHash(symbol);
+        const wrapperSupport = getConfidentialWrapperSupport(symbol, SUPPORTED_CHAIN_ID);
         setPolicySaveMessage(`Checking ${symbol} guard allowlist...`);
-        const [currentHashAllowed, currentAddressAllowed] = await Promise.all([
+        const [currentHashAllowed, currentAddressAllowed, currentWrapper] = await Promise.all([
           live.publicClient.readContract({
             address: live.executionGuardAddress,
             abi: executionGuardAbi,
@@ -961,7 +1188,13 @@ export function AppStateProvider({ children }: PropsWithChildren) {
             abi: executionGuardAbi,
             functionName: "allowedTokenAddresses",
             args: [configuredToken.address]
-          }) as Promise<boolean>
+          }) as Promise<boolean>,
+          live.publicClient.readContract({
+            address: live.executionGuardAddress,
+            abi: executionGuardAbi,
+            functionName: "confidentialWrappers",
+            args: [configuredToken.address]
+          }) as Promise<`0x${string}`>
         ]);
 
         if (currentHashAllowed !== desiredAllowed) {
@@ -984,6 +1217,28 @@ export function AppStateProvider({ children }: PropsWithChildren) {
             args: [configuredToken.address, desiredAllowed]
           });
           allowlistTxHashes.push(txHash);
+        }
+
+        if (desiredAllowed && wrapperSupport.supported && wrapperSupport.wrapperAddress) {
+          if (currentWrapper.toLowerCase() !== wrapperSupport.wrapperAddress.toLowerCase()) {
+            setPolicySaveMessage(`Confirm ${symbol} confidential wrapper update in your wallet...`);
+            const { txHash } = await sendWrite({
+              contractAddress: live.executionGuardAddress,
+              abi: executionGuardAbi,
+              functionName: "setConfidentialWrapper",
+              args: [configuredToken.address, wrapperSupport.wrapperAddress, true]
+            });
+            wrapperTxHashes.push(txHash);
+          }
+        } else if (!isZeroHex(currentWrapper)) {
+          setPolicySaveMessage(`Confirm ${symbol} confidential wrapper removal in your wallet...`);
+          const { txHash } = await sendWrite({
+            contractAddress: live.executionGuardAddress,
+            abi: executionGuardAbi,
+            functionName: "setConfidentialWrapper",
+            args: [configuredToken.address, "0x0000000000000000000000000000000000000000", false]
+          });
+          wrapperTxHashes.push(txHash);
         }
       }
 
@@ -1014,6 +1269,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       setDecision(null);
       setSettlement(null);
       setLastExecutedSymbol(null);
+      setConfidentialPosition(null);
       appendActivity(
         createActivity(
           "operator",
@@ -1033,6 +1289,10 @@ export function AppStateProvider({ children }: PropsWithChildren) {
             allowlistTxHashes.length > 0
               ? ` Updated ${allowlistTxHashes.length} guard allowlist setting${allowlistTxHashes.length === 1 ? "" : "s"}.`
               : " Guard token allowlist was already up to date."
+          }${
+            wrapperTxHashes.length > 0
+              ? ` Updated ${wrapperTxHashes.length} confidential wrapper mapping${wrapperTxHashes.length === 1 ? "" : "s"}.`
+              : " Confidential wrapper mappings were already in sync."
           }`
         )
       );
@@ -1105,13 +1365,19 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   }
 
   function evaluateDecisionAction() {
+    const wrapperSupport =
+      recommendation && (!recommendation.execution_status || recommendation.execution_status === "executable")
+        ? getConfidentialWrapperSupport(recommendation.symbol, chainId ?? SUPPORTED_CHAIN_ID)
+        : null;
     const nextDecision = evaluateExecution({
       mode,
       paused: systemPaused,
       policy,
       recommendation,
       vault,
-      executionWallet
+      executionWallet,
+      wrapperReady: wrapperSupport?.supported,
+      wrapperReason: wrapperSupport?.reason ?? null
     });
     setDecision(nextDecision);
     appendActivity(
@@ -1222,6 +1488,18 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         tradesUsedToday: current.tradesUsedToday + 1,
         status: "executed"
       }));
+      setConfidentialPosition({
+        ...mockConfidentialPosition,
+        status: "not_wrapped",
+        wrapTxHash: null,
+        encryptedAmountHandle: null,
+        encryptedBalanceHandle: null,
+        decryptedBalance: null,
+        revealError: null,
+        unwrapRequestHandle: null,
+        unwrapTxHash: null,
+        finalizeUnwrapTxHash: null
+      });
       appendActivity(
         createActivity(
           "execution-layer",
@@ -1330,6 +1608,21 @@ export function AppStateProvider({ children }: PropsWithChildren) {
           `${describeWriteAction(txHash, "ExecutionGuard.executeExactInputSingle")} Swapped ${spendAmountUsd} ${sessionAsset.symbol} for approximately ${tokenUnitsToNumber(actualAmountOut, outputToken.decimals).toFixed(6)} ${outputToken.symbol} after verifying the confidential min-confidence proof and a live quoter-derived min out.`
         )
       );
+      const wrapperSupport = getConfidentialWrapperSupport(outputToken.symbol, SUPPORTED_CHAIN_ID);
+      setConfidentialPosition((current) =>
+        buildConfidentialPosition({
+          symbol: outputToken.symbol,
+          address: outputToken.address,
+          wrapperAddress: wrapperSupport.wrapperAddress,
+          publicAmount: formatPublicAmount(actualAmountOut, outputToken.decimals),
+          chainId: SUPPORTED_CHAIN_ID,
+          encryptedAmountHandle: null,
+          encryptedBalanceHandle: null,
+          wrapTxHash: null,
+          status: wrapperSupport.supported ? "not_wrapped" : "missing_wrapper",
+          previous: current
+        })
+      );
       await refreshFromChain();
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unable to execute the live swap.";
@@ -1338,6 +1631,327 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       throw error;
     } finally {
       setIsExecuting(false);
+    }
+  }
+
+  async function wrapAcquiredPosition() {
+    const targetSymbol = confidentialPosition?.underlyingSymbol ?? lastExecutedSymbol ?? recommendation?.symbol ?? null;
+    if (!targetSymbol) {
+      const message = "Execute the guarded swap first so there is an acquired ERC-20 position to wrap.";
+      setLastError(message);
+      appendActivity(createActivity("execution-layer", "warning", "Wrap blocked", message));
+      throw new Error(message);
+    }
+
+    setIsWrapping(true);
+    setWrapStage("wrapping");
+
+    if (mode === "mock") {
+      setConfidentialPosition({
+        ...mockConfidentialPosition,
+        publicAmount: confidentialPosition?.publicAmount ?? mockConfidentialPosition.publicAmount,
+        status: "wrapped"
+      });
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "warning",
+          "Mock confidential wrap recorded",
+          "The acquired position was wrapped in dev-only mock mode."
+        )
+      );
+      setWrapStage("wrapped");
+      setIsWrapping(false);
+      return;
+    }
+
+    try {
+      setLastError(null);
+      const live = assertLiveMode("Confidential wrap");
+      if (!executionWallet.sessionActive) {
+        throw new Error("An active live session is required before wrapping the acquired position.");
+      }
+
+      const outputToken = getTokenConfig(targetSymbol);
+      const wrapperSupport = getConfidentialWrapperSupport(outputToken.symbol, SUPPORTED_CHAIN_ID);
+      if (!wrapperSupport.supported || !wrapperSupport.wrapperAddress) {
+        throw new Error(wrapperSupport.reason ?? `No confidential wrapper is configured for ${outputToken.symbol}.`);
+      }
+
+      const amountToWrap = await readTokenBalance(outputToken.address, live.executionGuardAddress);
+      if (amountToWrap === 0n) {
+        throw new Error(`ExecutionGuard does not currently hold any ${outputToken.symbol} to wrap.`);
+      }
+
+      setConfidentialPosition((current) =>
+        buildConfidentialPosition({
+          symbol: outputToken.symbol,
+          address: outputToken.address,
+          wrapperAddress: wrapperSupport.wrapperAddress,
+          publicAmount: formatPublicAmount(amountToWrap, outputToken.decimals),
+          chainId: SUPPORTED_CHAIN_ID,
+          encryptedAmountHandle: current?.encryptedAmountHandle ?? null,
+          encryptedBalanceHandle: current?.encryptedBalanceHandle ?? null,
+          wrapTxHash: current?.wrapTxHash ?? null,
+          status: "wrapping",
+          previous: current
+        })
+      );
+
+      const { txHash, result } = await sendWrite({
+        contractAddress: live.executionGuardAddress,
+        abi: executionGuardAbi,
+        functionName: "wrapLastOutput",
+        args: [outputToken.address, amountToWrap, createExecutionReference("execution", `${outputToken.symbol}-wrap`)]
+      });
+
+      const wrapResult = Array.isArray(result)
+        ? (result as readonly [`0x${string}`, `0x${string}`])
+        : null;
+
+      setConfidentialPosition((current) =>
+        buildConfidentialPosition({
+          symbol: outputToken.symbol,
+          address: outputToken.address,
+          wrapperAddress: wrapperSupport.wrapperAddress,
+          publicAmount: formatPublicAmount(amountToWrap, outputToken.decimals),
+          chainId: SUPPORTED_CHAIN_ID,
+          encryptedAmountHandle: wrapResult?.[0] ?? current?.encryptedAmountHandle ?? null,
+          encryptedBalanceHandle: wrapResult?.[1] ?? current?.encryptedBalanceHandle ?? null,
+          wrapTxHash: txHash,
+          status: "wrapped",
+          previous: current
+        })
+      );
+      setWrapStage("wrapped");
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "success",
+          "Confidential wrap completed",
+          `${describeWriteAction(txHash, "ExecutionGuard.wrapLastOutput")} Wrapped the acquired ${outputToken.symbol} position into ${wrapperSupport.wrapperAddress}.`
+        )
+      );
+      await refreshFromChain();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to wrap the acquired position.";
+      setLastError(message);
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              status: current.wrapperAddress ? "not_wrapped" : "missing_wrapper",
+              revealError: message
+            }
+          : current
+      );
+      appendActivity(createActivity("system", "error", "Confidential wrap failed", message));
+      throw error;
+    } finally {
+      setWrapStage("idle");
+      setIsWrapping(false);
+    }
+  }
+
+  async function revealConfidentialBalance() {
+    const handle = confidentialPosition?.encryptedBalanceHandle;
+    if (!handle || !confidentialPosition) {
+      const message = "Wrap the acquired position first so there is a confidential balance handle to reveal.";
+      setLastError(message);
+      appendActivity(createActivity("execution-layer", "warning", "Reveal blocked", message));
+      throw new Error(message);
+    }
+
+    setIsRevealing(true);
+    setRevealStage("revealing");
+
+    if (mode === "mock") {
+      setConfidentialPosition({
+        ...mockConfidentialPosition,
+        publicAmount: confidentialPosition.publicAmount,
+        status: "revealed"
+      });
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "warning",
+          "Mock confidential balance revealed",
+          "The owner-only reveal path ran in dev-only mock mode."
+        )
+      );
+      setIsRevealing(false);
+      setRevealStage("idle");
+      return;
+    }
+
+    try {
+      setLastError(null);
+      const live = assertLiveMode("Confidential reveal");
+      const noxClient = await createLiveNoxHandleClient("Confidential reveal");
+      const acl = await getHandleAcl(noxClient, handle);
+      const lowerAddress = live.address.toLowerCase();
+      const canDecrypt =
+        acl.isPublic ||
+        acl.admins.some((entry) => entry.toLowerCase() === lowerAddress) ||
+        acl.viewers.some((entry) => entry.toLowerCase() === lowerAddress);
+
+      if (!canDecrypt) {
+        throw new Error("The connected wallet is not permitted to reveal this confidential balance handle.");
+      }
+
+      const decryptedBalance = await decryptHandle(noxClient, "confidentialBalance", handle);
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              viewerAclState: {
+                isPublic: acl.isPublic,
+                admins: acl.admins,
+                viewers: acl.viewers,
+                canDecrypt,
+                checkedAt: new Date().toISOString()
+              },
+              decryptedBalance,
+              revealError: null,
+              status: "revealed"
+            }
+          : current
+      );
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "success",
+          "Confidential balance revealed",
+          `Owner-only reveal succeeded for the ${confidentialPosition.underlyingSymbol} confidential position handle.`
+        )
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to reveal the confidential balance.";
+      setLastError(message);
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              revealError: message,
+              status: "reveal_failed"
+            }
+          : current
+      );
+      appendActivity(createActivity("system", "error", "Confidential reveal failed", message));
+      throw error;
+    } finally {
+      setIsRevealing(false);
+      setRevealStage("idle");
+    }
+  }
+
+  async function unwrapConfidentialPosition() {
+    if (!confidentialPosition?.wrapperAddress || !confidentialPosition.encryptedBalanceHandle) {
+      const message = "A wrapped confidential position is required before unwrap can start.";
+      setLastError(message);
+      appendActivity(createActivity("execution-layer", "warning", "Unwrap blocked", message));
+      throw new Error(message);
+    }
+
+    setIsUnwrapping(true);
+    setUnwrapStage("requesting");
+
+    if (mode === "mock") {
+      setConfidentialPosition({
+        ...mockConfidentialPosition,
+        publicAmount: confidentialPosition.publicAmount,
+        status: "unwrapped",
+        unwrapRequestHandle: "0xmock-unwrap",
+        unwrapTxHash: "0xmock-unwrap-tx",
+        finalizeUnwrapTxHash: "0xmock-finalize-tx"
+      });
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "warning",
+          "Mock confidential unwrap recorded",
+          "The unwrap path ran in dev-only mock mode."
+        )
+      );
+      setIsUnwrapping(false);
+      setUnwrapStage("idle");
+      return;
+    }
+
+    try {
+      setLastError(null);
+      const live = assertLiveMode("Confidential unwrap");
+      const noxClient = await createLiveNoxHandleClient("Confidential unwrap");
+
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              status: "unwrap_pending"
+            }
+          : current
+      );
+
+      const { txHash: unwrapTxHash, result } = await sendWrite({
+        contractAddress: confidentialPosition.wrapperAddress as `0x${string}`,
+        abi: confidentialWrapperAbi,
+        functionName: "unwrap",
+        args: [live.address, live.address, confidentialPosition.encryptedBalanceHandle]
+      });
+
+      const unwrapRequestHandle =
+        (typeof result === "string" ? result : Array.isArray(result) ? result[0] : null) as `0x${string}` | null;
+      if (!unwrapRequestHandle || isZeroHex(unwrapRequestHandle)) {
+        throw new Error("The confidential wrapper did not return a valid unwrap request handle.");
+      }
+
+      setUnwrapStage("finalizing");
+      const unwrapDecryption = await publicDecryptHandle(noxClient, unwrapRequestHandle);
+      const { txHash: finalizeTxHash } = await sendWrite({
+        contractAddress: confidentialPosition.wrapperAddress as `0x${string}`,
+        abi: confidentialWrapperAbi,
+        functionName: "finalizeUnwrap",
+        args: [unwrapRequestHandle, unwrapDecryption.decryptionProof as `0x${string}`]
+      });
+
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              unwrapRequestHandle,
+              unwrapTxHash,
+              finalizeUnwrapTxHash: finalizeTxHash,
+              decryptedBalance: unwrapDecryption.value,
+              status: "unwrapped"
+            }
+          : current
+      );
+      appendActivity(
+        createActivity(
+          "execution-layer",
+          "success",
+          "Confidential unwrap finalized",
+          `${describeWriteAction(unwrapTxHash, "Confidential wrapper unwrap")} Finalized the request in tx ${finalizeTxHash}.`
+        )
+      );
+      await refreshFromChain();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to unwrap the confidential position.";
+      setLastError(message);
+      setConfidentialPosition((current) =>
+        current
+          ? {
+              ...current,
+              revealError: message,
+              status: "reveal_failed"
+            }
+          : current
+      );
+      appendActivity(createActivity("system", "error", "Confidential unwrap failed", message));
+      throw error;
+    } finally {
+      setIsUnwrapping(false);
+      setUnwrapStage("idle");
     }
   }
 
@@ -1364,6 +1978,10 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       const sessionAsset = getSessionAssetConfig();
       const outputSymbol = lastExecutedSymbol ?? recommendation?.symbol ?? sessionAsset.symbol;
       const outputToken = getTokenConfig(outputSymbol);
+      const wrappedPositionActive =
+        confidentialPosition?.underlyingSymbol === outputSymbol &&
+        confidentialPosition.status !== "not_wrapped" &&
+        confidentialPosition.status !== "missing_wrapper";
       const [sessionAssetBalance, outputBalance] = await Promise.all([
         readTokenBalance(sessionAsset.address, live.executionGuardAddress),
         outputToken.symbol === sessionAsset.symbol
@@ -1375,7 +1993,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         await estimateReturnedAmountUsd(outputSymbol, outputBalance, sessionAssetBalance)
       );
       const tokensToSweep =
-        outputToken.symbol === sessionAsset.symbol ? [] : ([outputToken.address] as `0x${string}`[]);
+        outputToken.symbol === sessionAsset.symbol || wrappedPositionActive
+          ? []
+          : ([outputToken.address] as `0x${string}`[]);
       const { txHash } = await sendWrite({
         contractAddress: live.executionGuardAddress,
         abi: executionGuardAbi,
@@ -1393,7 +2013,11 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         sessionClosed: true,
         txRef: txHash,
         summary:
-          outputToken.symbol === sessionAsset.symbol
+          wrappedPositionActive
+            ? confidentialPosition?.status === "unwrapped"
+              ? `The active session was closed on-chain and the remaining ${sessionAsset.symbol} was swept back to the vault wallet. The ${outputToken.symbol} position had already been unwrapped to the owner wallet.`
+              : `The active session was closed on-chain and the remaining ${sessionAsset.symbol} was swept back to the vault wallet. The ${outputToken.symbol} position remains represented by the confidential wrapper.`
+            : outputToken.symbol === sessionAsset.symbol
             ? "The active session was closed on-chain and the funded session asset was swept back to the vault wallet."
             : `The active session was closed on-chain and both ${sessionAsset.symbol} and ${outputToken.symbol} balances were swept back to the vault wallet.`
       };
@@ -1511,6 +2135,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
     if (!walletConnected) {
       setVault(createEmptyVault(null, chainId || SUPPORTED_CHAIN_ID));
       setExecutionWallet(createEmptyExecutionWallet());
+      setConfidentialPosition(null);
       setSystemPaused(false);
       setTopologyReady(false);
       setFundingStage("idle");
@@ -1559,6 +2184,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         recommendation,
         decision,
         settlement,
+        confidentialPosition,
         activity,
         lastError,
         isInitializing,
@@ -1567,6 +2193,12 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         isFunding,
         fundingStage,
         isExecuting,
+        isWrapping,
+        wrapStage,
+        isRevealing,
+        revealStage,
+        isUnwrapping,
+        unwrapStage,
         isSettling,
         isPausing,
         setMode,
@@ -1578,6 +2210,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         evaluateDecision: evaluateDecisionAction,
         fundExecutionWallet,
         executeTrade,
+        wrapAcquiredPosition,
+        revealConfidentialBalance,
+        unwrapConfidentialPosition,
         settleToVault,
         togglePause,
         revokeSession,

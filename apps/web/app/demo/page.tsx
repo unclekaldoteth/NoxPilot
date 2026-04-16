@@ -10,6 +10,7 @@ import { TokenDiscoveryCard } from "@/components/noxpilot/token-discovery-card";
 import { ResearchRecommendationCard } from "@/components/noxpilot/research-recommendation-card";
 import { ExecutionDecisionCard } from "@/components/noxpilot/execution-decision-card";
 import { FundingCard } from "@/components/noxpilot/funding-card";
+import { ConfidentialPositionCard } from "@/components/noxpilot/confidential-position-card";
 import { SettlementCard } from "@/components/noxpilot/settlement-card";
 import { SafetyControlsPanel } from "@/components/noxpilot/safety-controls-panel";
 import { ActivityTimeline } from "@/components/noxpilot/activity-timeline";
@@ -117,10 +118,13 @@ export default function DemoPage() {
           </Button>
         </div>
 
-        {/* Step 9: Settlement */}
+        {/* Step 9: Wrap / Reveal / Unwrap */}
+        <ConfidentialPositionCard interactive />
+
+        {/* Step 10: Settlement */}
         <SettlementCard interactive />
 
-        {/* Step 10: Safety Controls */}
+        {/* Step 11: Safety Controls */}
         <SafetyControlsPanel />
       </DemoWizard>
 

@@ -13,12 +13,13 @@ const steps = [
   "Evaluate decision",
   "Open session",
   "Execute live swap",
+  "Wrap confidential asset",
   "Settle session",
   "Pause / revoke"
 ];
 
 export function DemoStepper() {
-  const { walletConnected, encryptedPolicy, recommendation, decision, executionWallet, settlement, systemPaused } = useNoxPilot();
+  const { walletConnected, encryptedPolicy, recommendation, decision, executionWallet, confidentialPosition, settlement, systemPaused } = useNoxPilot();
 
   const completedCount = [
     walletConnected,
@@ -28,6 +29,7 @@ export function DemoStepper() {
     Boolean(decision),
     executionWallet.sessionActive || executionWallet.status === "executed" || executionWallet.status === "settled",
     executionWallet.status === "executed" || executionWallet.status === "settled",
+    Boolean(confidentialPosition?.encryptedBalanceHandle) || confidentialPosition?.status === "unwrapped",
     Boolean(settlement),
     systemPaused
   ].filter(Boolean).length;

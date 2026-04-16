@@ -21,7 +21,10 @@ const publicEnvSchema = z.object({
   NEXT_PUBLIC_SESSION_ASSET_ADDRESS: z.string().optional().or(z.literal("")),
   NEXT_PUBLIC_TOKEN_ETH_ADDRESS: z.string().optional().or(z.literal("")),
   NEXT_PUBLIC_TOKEN_ARB_ADDRESS: z.string().optional().or(z.literal("")),
-  NEXT_PUBLIC_TOKEN_LINK_ADDRESS: z.string().optional().or(z.literal(""))
+  NEXT_PUBLIC_TOKEN_LINK_ADDRESS: z.string().optional().or(z.literal("")),
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS: z.string().optional().or(z.literal("")),
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS: z.string().optional().or(z.literal("")),
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS: z.string().optional().or(z.literal(""))
 });
 
 export const publicEnv = publicEnvSchema.parse({
@@ -49,7 +52,10 @@ export const publicEnv = publicEnvSchema.parse({
     process.env.NEXT_PUBLIC_SESSION_ASSET_ADDRESS ?? process.env.NEXT_PUBLIC_TOKEN_USDC_ADDRESS ?? "",
   NEXT_PUBLIC_TOKEN_ETH_ADDRESS: process.env.NEXT_PUBLIC_TOKEN_ETH_ADDRESS ?? "",
   NEXT_PUBLIC_TOKEN_ARB_ADDRESS: process.env.NEXT_PUBLIC_TOKEN_ARB_ADDRESS ?? "",
-  NEXT_PUBLIC_TOKEN_LINK_ADDRESS: process.env.NEXT_PUBLIC_TOKEN_LINK_ADDRESS ?? ""
+  NEXT_PUBLIC_TOKEN_LINK_ADDRESS: process.env.NEXT_PUBLIC_TOKEN_LINK_ADDRESS ?? "",
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS: process.env.NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS ?? "",
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS: process.env.NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS ?? "",
+  NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS: process.env.NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS ?? ""
 });
 
 export const devMocksEnabled = publicEnv.NEXT_PUBLIC_ENABLE_DEV_MOCKS === "true";

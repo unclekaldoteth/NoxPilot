@@ -30,6 +30,49 @@ export const ExecutionWalletStateSchema = z.object({
 });
 export type ExecutionWalletState = z.infer<typeof ExecutionWalletStateSchema>;
 
+export const ConfidentialPositionStatusSchema = z.enum([
+  "not_wrapped",
+  "wrapping",
+  "wrapped",
+  "revealable",
+  "revealing",
+  "revealed",
+  "reveal_failed",
+  "missing_wrapper",
+  "unsupported_chain",
+  "unwrap_pending",
+  "unwrapped"
+]);
+export type ConfidentialPositionStatus = z.infer<typeof ConfidentialPositionStatusSchema>;
+
+export const ConfidentialViewerAclStateSchema = z.object({
+  isPublic: z.boolean(),
+  admins: z.array(z.string()).default([]),
+  viewers: z.array(z.string()).default([]),
+  canDecrypt: z.boolean(),
+  checkedAt: z.string().nullable()
+});
+export type ConfidentialViewerAclState = z.infer<typeof ConfidentialViewerAclStateSchema>;
+
+export const ConfidentialPositionSchema = z.object({
+  underlyingSymbol: z.string(),
+  underlyingAddress: z.string(),
+  wrapperAddress: z.string().nullable(),
+  chainId: z.number(),
+  publicAmount: z.string().nullable(),
+  encryptedAmountHandle: z.string().nullable(),
+  encryptedBalanceHandle: z.string().nullable(),
+  wrapTxHash: z.string().nullable(),
+  unwrapRequestHandle: z.string().nullable(),
+  unwrapTxHash: z.string().nullable(),
+  finalizeUnwrapTxHash: z.string().nullable(),
+  viewerAclState: ConfidentialViewerAclStateSchema.nullable(),
+  decryptedBalance: z.string().nullable(),
+  revealError: z.string().nullable(),
+  status: ConfidentialPositionStatusSchema
+});
+export type ConfidentialPosition = z.infer<typeof ConfidentialPositionSchema>;
+
 export const PrivatePolicyInputSchema = z.object({
   dailyBudgetUsd: z.number().min(50).max(50000),
   minConfidenceScore: z.number().min(50).max(99),

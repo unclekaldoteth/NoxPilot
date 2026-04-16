@@ -124,6 +124,13 @@ export function getConfiguredDemoTokens(): LiveTokenConfig[] {
   });
 }
 
+export function maybeGetTokenConfigByAddress(address: string): LiveTokenConfig | null {
+  const normalizedAddress = address.toLowerCase();
+  return (
+    getConfiguredDemoTokens().find((token) => token.address.toLowerCase() === normalizedAddress) ?? null
+  );
+}
+
 export function usdToSessionAssetUnits(amountUsd: number): bigint {
   const sessionAsset = getSessionAssetConfig();
   return parseUnits(amountUsd.toFixed(0), sessionAsset.decimals);

@@ -10,6 +10,8 @@ The `contracts/` package is Foundry-based and targets Arbitrum Sepolia by defaul
   Validates that a registered execution wallet can only act during an active session, within budget, within trade-count limits, and against a token allowlist anchored to the vault's current whitelist reference. It also funds the real session asset, executes one exact-input swap through a configured router, and sweeps settlement assets back to the vault owner.
 - `script/Deploy.s.sol`
   Minimal Foundry deploy script that reads deploy settings from environment variables and wires the vault to the guard.
+- `script/DeployWrappers.s.sol`
+  Wrapper-only deploy script that targets an existing `ExecutionGuard`, deploys missing `NoxPilotConfidentialERC20Wrapper` instances, and registers them without redeploying the vault or guard.
 
 ## Prerequisites
 
@@ -93,6 +95,47 @@ forge script script/Deploy.s.sol:Deploy \
 ```
 
 The first command is a local dry-run. The second broadcasts to Arbitrum Sepolia.
+
+## Deploy Wrappers Only
+
+Use this path after the vault and guard already exist and you only want to add confidential wrappers.
+
+Required additions in `contracts/.env`:
+
+- `EXECUTION_GUARD_ADDRESS`: existing live `ExecutionGuard`
+- `DEPLOY_WRAPPER_ETH=true|false`
+- `DEPLOY_WRAPPER_ARB=true|false`
+- `DEPLOY_WRAPPER_LINK=true|false`
+
+The script is intentionally safe by default:
+
+- it reverts before broadcast if no wrapper toggle is enabled
+- it reverts before broadcast if the signer is not the current `ExecutionGuard.admin()`
+- it skips any token that already has a registered wrapper, so reruns are idempotent
+
+Commands:
+
+```bash
+cd contracts
+set -a
+source .env
+set +a
+forge script script/DeployWrappers.s.sol:DeployWrappers \
+  --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" \
+  -vv
+forge script script/DeployWrappers.s.sol:DeployWrappers \
+  --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" \
+  --broadcast \
+  -vv
+```
+
+Unlike the full bootstrap deploy, the wrapper-only script cannot use `--offline` because it must read the existing `ExecutionGuard` admin and current wrapper registry from chain state before broadcasting.
+
+After wrapper deployment, copy the emitted wrapper addresses into:
+
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS`
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS`
 
 ## Required Environment Variables
 

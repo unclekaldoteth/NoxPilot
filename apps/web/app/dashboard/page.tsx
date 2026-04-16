@@ -3,6 +3,7 @@
 import { SectionTitle } from "@noxpilot/ui";
 import { SystemHealthBanner } from "@/components/noxpilot/system-health-banner";
 import { ActivityTimeline } from "@/components/noxpilot/activity-timeline";
+import { ConfidentialPositionCard } from "@/components/noxpilot/confidential-position-card";
 import { EncryptedPolicySummaryCard } from "@/components/noxpilot/encrypted-policy-summary-card";
 import { ExecutionDecisionCard } from "@/components/noxpilot/execution-decision-card";
 import { ExecutionWalletCard } from "@/components/noxpilot/execution-wallet-card";
@@ -51,7 +52,10 @@ export default function DashboardPage() {
           <FundingCard />
         </div>
         <div className="grid gap-6 lg:grid-cols-2">
+          <ConfidentialPositionCard />
           <SettlementCard />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
           <SystemStatusCard />
         </div>
       </div>

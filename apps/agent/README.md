@@ -52,7 +52,8 @@ Required/optional environment:
 - `CHAINGPT_API_KEY`: server-side ChainGPT API key. Never expose this to the browser.
 - `CHAINGPT_BASE_URL`: defaults to `https://api.chaingpt.org`.
 - `CHAINGPT_MODEL`: defaults to `general_assistant`.
-- `CHAINGPT_TIMEOUT_SECONDS`: defaults to `20`.
+- `CHAINGPT_TIMEOUT_SECONDS`: defaults to `6`.
+- `CHAINGPT_ANALYST_BUDGET_SECONDS`: defaults to `7`, so the agent falls back to the local explainer before the web proxy times out.
 
 ## Endpoints
 
@@ -277,6 +278,8 @@ Key values:
 - `DEXSCREENER_BASE_URL=https://api.dexscreener.com`
 - `DEXSCREENER_TIMEOUT_SECONDS=10`
 - `CHAINGPT_API_KEY=<server-side ChainGPT key>`
+- `CHAINGPT_TIMEOUT_SECONDS=6`
+- `CHAINGPT_ANALYST_BUDGET_SECONDS=7`
 
 ## Validation
 

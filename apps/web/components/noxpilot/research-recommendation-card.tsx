@@ -23,6 +23,7 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
     setResearchExplanation
   } = useNoxPilot();
   const [requestError, setRequestError] = useState<string | null>(null);
+  const [explanationWarning, setExplanationWarning] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [showShortlist, setShowShortlist] = useState(false);
   const threshold = policy?.minConfidenceScore ?? 70;
@@ -35,6 +36,7 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
     startTransition(async () => {
       try {
         setRequestError(null);
+        setExplanationWarning(null);
         const sessionAssetSymbol = (() => {
           try {
             return getSessionAssetConfig().symbol;
@@ -62,12 +64,16 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
         );
         setResearchResult(ranking.data, ranking.delivery.source);
 
-        const explain = await fetchResearchExplanation(
-          ranking.data.bestCandidate,
-          policy?.minConfidenceScore,
-          policy?.allowedProtocol
-        );
-        setResearchExplanation(explain.data, explain.delivery.source);
+        try {
+          const explain = await fetchResearchExplanation(
+            ranking.data.bestCandidate,
+            policy?.minConfidenceScore,
+            policy?.allowedProtocol
+          );
+          setResearchExplanation(explain.data, explain.delivery.source);
+        } catch {
+          setExplanationWarning("Ranking succeeded, but the ChainGPT explanation is unavailable. Showing the research result only.");
+        }
       } catch (requestError) {
         setRequestError(requestError instanceof Error ? requestError.message : "Unable to fetch live research.");
       }
@@ -233,6 +239,7 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
         </>
       )}
 
+      {explanationWarning ? <p aria-live="polite" className="text-sm text-amber-200">{explanationWarning}</p> : null}
       {requestError ? <p aria-live="polite" className="text-sm text-rose-300">{requestError}</p> : null}
       {interactive ? (
         <Button onClick={handleTriggerResearch} disabled={isPending}>

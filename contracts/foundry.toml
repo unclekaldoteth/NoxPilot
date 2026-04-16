@@ -4,7 +4,9 @@ script = "script"
 out = "out"
 libs = ["../node_modules"]
 remappings = [
+  "@iexec-nox/nox-confidential-contracts/=../node_modules/@iexec-nox/nox-confidential-contracts/",
   "@iexec-nox/nox-protocol-contracts/=../node_modules/@iexec-nox/nox-protocol-contracts/",
+  "@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/",
   "encrypted-types/=../node_modules/encrypted-types/"
 ]
 auto_detect_solc = false
@@ -12,3 +14,6 @@ solc = "/opt/homebrew/bin/solc"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+
+[lint]
+lint_on_build = false

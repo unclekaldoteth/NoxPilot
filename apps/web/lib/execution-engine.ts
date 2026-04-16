@@ -17,6 +17,8 @@ type EvaluationInput = {
   recommendation: Recommendation | null;
   vault: VaultState;
   executionWallet: ExecutionWalletState;
+  wrapperReady?: boolean;
+  wrapperReason?: string | null;
 };
 
 export function evaluateExecution(input: EvaluationInput): ExecutionDecision {
@@ -46,6 +48,11 @@ export function evaluateExecution(input: EvaluationInput): ExecutionDecision {
     reasons.push(
       input.recommendation.execution_note ??
         "Recommended token is research-only until its chain and token address are explicitly configured for execution."
+    );
+  }
+  if (input.wrapperReady === false) {
+    reasons.push(
+      input.wrapperReason ?? "Recommended token cannot be wrapped into a confidential asset with the current live config."
     );
   }
   if (!input.policy.allowedTokens.includes(input.recommendation.symbol)) {

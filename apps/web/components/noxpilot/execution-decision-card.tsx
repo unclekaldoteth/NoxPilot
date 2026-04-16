@@ -16,6 +16,7 @@ export function ExecutionDecisionCard({ interactive = false }: { interactive?: b
       ? [
           { label: "Token on allowed list", passed: true },
           { label: "Confidence above threshold", passed: true },
+          { label: "Confidential wrapper configured", passed: true },
           { label: "Budget available", passed: true },
           { label: "Session limits intact", passed: true }
         ]

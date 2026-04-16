@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   WalletCards,
   Zap,
+  Eye,
   ArrowRightLeft,
   PauseCircle
 } from "lucide-react";
@@ -85,6 +86,13 @@ const WIZARD_STEPS: WizardStep[] = [
     icon: <Zap className="h-4 w-4" />
   },
   {
+    key: "confidential",
+    label: "Wrap & Reveal Position",
+    shortLabel: "Confidential",
+    description: "Wrap the acquired ERC-20, reveal the balance, and optionally unwrap.",
+    icon: <Eye className="h-4 w-4" />
+  },
+  {
     key: "settle",
     label: "Settle Session",
     shortLabel: "Settle",
@@ -109,6 +117,7 @@ function useCurrentStep() {
     recommendation,
     decision,
     executionWallet,
+    confidentialPosition,
     settlement,
     systemPaused,
     hasUsedSafetyControl
@@ -123,6 +132,7 @@ function useCurrentStep() {
     Boolean(decision),
     executionWallet.sessionActive || executionWallet.status === "executed" || executionWallet.status === "settled",
     executionWallet.status === "executed" || executionWallet.status === "settled",
+    Boolean(confidentialPosition?.encryptedBalanceHandle) || confidentialPosition?.status === "unwrapped",
     Boolean(settlement),
     systemPaused || hasUsedSafetyControl
   ];

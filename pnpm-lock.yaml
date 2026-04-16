@@ -8,9 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@iexec-nox/nox-confidential-contracts':
+        specifier: 0.1.0
+        version: 0.1.0
       '@iexec-nox/nox-protocol-contracts':
         specifier: ^0.1.0
         version: 0.1.0
+      '@openzeppelin/contracts':
+        specifier: 5.6.1
+        version: 5.6.1
       '@types/node':
         specifier: ^22.13.5
         version: 22.19.17
@@ -274,6 +280,9 @@ packages:
         optional: true
       viem:
         optional: true
+
+  '@iexec-nox/nox-confidential-contracts@0.1.0':
+    resolution: {integrity: sha512-Wv8ZOIk7xIysXTexpLACbfp1X5bqy91ooqq8MJkFkobvsgUd4eqbI3vE23Jo8zxTaQzATNzOg0oNV63H/A6thQ==}
 
   '@iexec-nox/nox-protocol-contracts@0.1.0':
     resolution: {integrity: sha512-sQ/yCpOXjUE2X5YmCmPKNLYfU00xTZSTI+yewVHOVZTdGA35QOPzOBg2Q8Qm++KLdPwc8FC0efc2jHqxMR83bg==}
@@ -3934,6 +3943,11 @@ snapshots:
       viem: 2.47.18(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.3.6)
     transitivePeerDependencies:
       - graphql
+
+  '@iexec-nox/nox-confidential-contracts@0.1.0':
+    dependencies:
+      '@iexec-nox/nox-protocol-contracts': 0.1.0
+      '@openzeppelin/contracts': 5.6.1
 
   '@iexec-nox/nox-protocol-contracts@0.1.0':
     dependencies:

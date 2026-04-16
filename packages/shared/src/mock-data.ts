@@ -6,6 +6,7 @@ import {
 } from "./constants";
 import type {
   ActivityItem,
+  ConfidentialPosition,
   EncryptedPolicyPayload,
   ExecutionWalletState,
   PrivatePolicyInput,
@@ -104,4 +105,28 @@ export const sampleEncryptedPolicy: EncryptedPolicyPayload = {
     { field: "minConfidenceScore", handle: "0xdeadbeef02", preview: "Confidence threshold encrypted", mode: "mock" },
     { field: "maxSlippageBps", handle: "0xdeadbeef03", preview: "Slippage threshold encrypted", mode: "mock" }
   ]
+};
+
+export const mockConfidentialPosition: ConfidentialPosition = {
+  underlyingSymbol: "ARB",
+  underlyingAddress: "0xMockArbToken0000000000000000000000000000001",
+  wrapperAddress: "0xMockWrapper000000000000000000000000000001",
+  chainId: DEFAULT_CHAIN_ID,
+  publicAmount: "300",
+  encryptedAmountHandle: "0xdeadbeef04",
+  encryptedBalanceHandle: "0xdeadbeef05",
+  wrapTxHash: "0xmock-wrap",
+  unwrapRequestHandle: null,
+  unwrapTxHash: null,
+  finalizeUnwrapTxHash: null,
+  viewerAclState: {
+    isPublic: false,
+    admins: [demoVaultState.walletAddress],
+    viewers: [demoVaultState.walletAddress],
+    canDecrypt: true,
+    checkedAt: "2026-04-15T09:07:00.000Z"
+  },
+  decryptedBalance: "300",
+  revealError: null,
+  status: "revealed"
 };

@@ -54,6 +54,12 @@ interface ISwapRouterLike {
     function exactInputSingle(ExactInputSingleParams calldata params) external payable returns (uint256 amountOut);
 }
 
+interface IConfidentialWrapperLike {
+    function underlying() external view returns (address);
+    function wrap(address to, uint256 amount) external returns (euint256);
+    function confidentialBalanceHandleOf(address account) external view returns (bytes32);
+}
+
 /// @title ExecutionGuard
 /// @notice Enforces bounded session rules and executes one whitelisted exact-input
 /// swap through a configured router for the NoxPilot live demo flow.
@@ -75,9 +81,16 @@ contract ExecutionGuard {
     error AssetApprovalFailed();
     error ZeroAmount();
     error InsufficientSessionAsset();
+    error WrapperNotConfigured();
+    error WrapperUnderlyingMismatch();
+    error NoSwapOutput();
+    error WrapAmountExceedsBalance();
+    error MissingConfidentialBalanceHandle();
 
+    event AdminRegistered(address indexed admin);
     event AllowedTokenUpdated(bytes32 indexed tokenHash, bool allowed);
     event AllowedTokenAddressUpdated(address indexed tokenAddress, bool allowed);
+    event ConfidentialWrapperUpdated(address indexed tokenAddress, address indexed wrapper, bool allowed);
     event PolicyWhitelistRootSynced(bytes32 indexed whitelistRoot);
     event SessionAssetFunded(address indexed funder, uint256 amount, bytes32 fundingRef);
     event ConfidenceApprovalPrepared(address indexed operator, uint256 observedConfidence, bytes32 indexed approvalHandle);
@@ -90,6 +103,15 @@ contract ExecutionGuard {
         uint256 amountOut,
         bytes32 executionRef
     );
+    event ConfidentialAssetWrapped(
+        address indexed tokenAddress,
+        address indexed wrapper,
+        address indexed owner,
+        uint256 amount,
+        bytes32 amountHandle,
+        bytes32 balanceHandle,
+        bytes32 wrapRef
+    );
     event SettlementRecorded(uint256 returnedAmountUsd, bytes32 settlementRef);
     event SessionAssetsSettled(uint256 returnedAmountUsd, bytes32 settlementRef);
 
@@ -100,16 +122,23 @@ contract ExecutionGuard {
     uint24 public immutable defaultPoolFee;
     uint256 public lastExecutionAt;
     uint256 public lastSettlementAt;
+    uint256 public lastWrapAt;
     uint256 public lastAmountIn;
     uint256 public lastAmountOut;
+    uint256 public lastWrapAmount;
     bytes32 public syncedWhitelistRoot;
     address public lastSwapToken;
+    address public lastWrapToken;
+    address public lastWrapWrapper;
+    bytes32 public lastWrapAmountHandle;
+    bytes32 public lastWrapBalanceHandle;
     mapping(address => bytes32) public pendingConfidenceApprovalHandles;
     mapping(address => uint256) public pendingConfidenceObserved;
     mapping(address => uint64) public pendingConfidencePolicyUpdatedAt;
     mapping(address => uint64) public pendingConfidenceSessionStartedAt;
     mapping(bytes32 => bool) public allowedTokenHashes;
     mapping(address => bool) public allowedTokenAddresses;
+    mapping(address => address) public confidentialWrappers;
 
     modifier onlyAdmin() {
         if (msg.sender != admin) revert NotAdmin();
@@ -156,6 +185,7 @@ contract ExecutionGuard {
         sessionAsset = sessionAssetAddress;
         swapRouter = swapRouterAddress;
         defaultPoolFee = poolFee;
+        emit AdminRegistered(initialAdmin);
     }
 
     function policyVault() external view returns (address) {
@@ -164,6 +194,12 @@ contract ExecutionGuard {
 
     function sessionAssetBalance() public view returns (uint256) {
         return IERC20Like(sessionAsset).balanceOf(address(this));
+    }
+
+    function registerAdmin(address newAdmin) external onlyAdmin {
+        if (newAdmin == address(0)) revert InvalidAddress();
+        admin = newAdmin;
+        emit AdminRegistered(newAdmin);
     }
 
     function syncPolicyWhitelistRoot() external onlyAdmin returns (bytes32 whitelistRoot) {
@@ -183,6 +219,20 @@ contract ExecutionGuard {
         if (tokenAddress == address(0)) revert InvalidAddress();
         allowedTokenAddresses[tokenAddress] = allowed;
         emit AllowedTokenAddressUpdated(tokenAddress, allowed);
+    }
+
+    function setConfidentialWrapper(address tokenAddress, address wrapper, bool allowed) external onlyAdmin {
+        if (tokenAddress == address(0)) revert InvalidAddress();
+        if (!allowed) {
+            delete confidentialWrappers[tokenAddress];
+            emit ConfidentialWrapperUpdated(tokenAddress, address(0), false);
+            return;
+        }
+        if (wrapper == address(0)) revert InvalidAddress();
+        if (IConfidentialWrapperLike(wrapper).underlying() != tokenAddress) revert WrapperUnderlyingMismatch();
+
+        confidentialWrappers[tokenAddress] = wrapper;
+        emit ConfidentialWrapperUpdated(tokenAddress, wrapper, true);
     }
 
     function previewExecution(
@@ -330,6 +380,50 @@ contract ExecutionGuard {
 
         emit ExecutionApproved(tokenHash, spendAmountUsd, executionRef);
         emit SwapExecuted(tokenHash, tokenOut, amountIn, amountOut, executionRef);
+    }
+
+    function wrapLastOutput(
+        address tokenOut,
+        uint256 amount,
+        bytes32 wrapRef
+    ) external onlyAuthorizedOperator returns (bytes32 amountHandle, bytes32 balanceHandle) {
+        if (tokenOut == address(0)) revert InvalidAddress();
+        if (amount == 0) revert ZeroAmount();
+        if (POLICY_VAULT.paused() || !POLICY_VAULT.isSessionActive()) revert SessionUnavailable();
+        if (lastSwapToken == address(0) || tokenOut != lastSwapToken) revert NoSwapOutput();
+        if (!allowedTokenAddresses[tokenOut]) revert TokenNotAllowed();
+
+        address wrapper = confidentialWrappers[tokenOut];
+        if (wrapper == address(0)) revert WrapperNotConfigured();
+        if (IConfidentialWrapperLike(wrapper).underlying() != tokenOut) revert WrapperUnderlyingMismatch();
+
+        uint256 availableBalance = IERC20Like(tokenOut).balanceOf(address(this));
+        if (availableBalance == 0 || amount > availableBalance) revert WrapAmountExceedsBalance();
+
+        _safeApprove(tokenOut, wrapper, 0);
+        _safeApprove(tokenOut, wrapper, amount);
+
+        euint256 wrappedAmount = IConfidentialWrapperLike(wrapper).wrap(POLICY_VAULT.owner(), amount);
+        amountHandle = euint256.unwrap(wrappedAmount);
+        balanceHandle = IConfidentialWrapperLike(wrapper).confidentialBalanceHandleOf(POLICY_VAULT.owner());
+        if (balanceHandle == bytes32(0)) revert MissingConfidentialBalanceHandle();
+
+        lastWrapAt = block.timestamp;
+        lastWrapToken = tokenOut;
+        lastWrapWrapper = wrapper;
+        lastWrapAmount = amount;
+        lastWrapAmountHandle = amountHandle;
+        lastWrapBalanceHandle = balanceHandle;
+
+        emit ConfidentialAssetWrapped(
+            tokenOut,
+            wrapper,
+            POLICY_VAULT.owner(),
+            amount,
+            amountHandle,
+            balanceHandle,
+            wrapRef
+        );
     }
 
     function recordExecution(
