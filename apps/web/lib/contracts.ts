@@ -17,6 +17,7 @@ import {
   type Hex
 } from "viem";
 import { publicEnv } from "./env";
+import { getConfiguredDemoTokens } from "./dex";
 
 export const policyVaultAbi = parseAbi([
   "function owner() view returns (address)",
@@ -54,6 +55,7 @@ export const executionGuardAbi = parseAbi([
   "function lastAmountOut() view returns (uint256)",
   "function pendingConfidenceApprovalHandles(address) view returns (bytes32)",
   "function pendingConfidenceObserved(address) view returns (uint256)",
+  "function allowedTokenHashes(bytes32) view returns (bool)",
   "function allowedTokenAddresses(address) view returns (bool)",
   "function previewExecution(bytes32 tokenHash, address caller, uint256 spendAmountUsd, uint256 observedConfidence) view returns (bool allowed, string reason)",
   "function syncPolicyWhitelistRoot() returns (bytes32 whitelistRoot)",
@@ -229,7 +231,7 @@ export function buildEncryptedPolicyFromChain(policyRefs: PolicyRefs): Encrypted
     network: DEFAULT_NETWORK,
     handleVersion: "nox-live-v1",
     publicSummary: {
-      allowedTokens: metadata?.allowedTokens ?? DEFAULT_ALLOWED_TOKENS.slice(),
+      allowedTokens: metadata?.allowedTokens ?? getConfiguredDemoTokens().map((token) => token.symbol),
       allowedProtocol: policyRefs.allowedProtocol,
       oneTradePerDay: metadata?.oneTradePerDay ?? true,
       sessionExpiryHours: metadata?.sessionExpiryHours ?? 8,
@@ -240,11 +242,12 @@ export function buildEncryptedPolicyFromChain(policyRefs: PolicyRefs): Encrypted
 }
 
 export function buildDefaultPolicyInput(): PrivatePolicyInput {
+  const configuredTokens = getConfiguredDemoTokens().map((token) => token.symbol);
   return {
     dailyBudgetUsd: 1500,
     minConfidenceScore: 78,
     maxSlippageBps: 45,
-    allowedTokens: DEFAULT_ALLOWED_TOKENS.slice(),
+    allowedTokens: configuredTokens.length > 0 ? configuredTokens : DEFAULT_ALLOWED_TOKENS.slice(),
     allowedProtocol: "NoxPilot ExecutionGuard Session",
     oneTradePerDay: true,
     sessionExpiryHours: 8,

@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchResearchExplanation, fetchResearchRanking } from "@/lib/research";
 import { formatPct, formatUsd } from "@/lib/format";
-import { getSessionAssetConfig } from "@/lib/dex";
+import { getConfiguredDemoTokens, getSessionAssetConfig } from "@/lib/dex";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 
 export function ResearchRecommendationCard({ interactive = false }: { interactive?: boolean }) {
   const {
     policy,
+    tokenDiscovery,
     research,
     recommendation,
     researchExplanation,
@@ -41,7 +42,12 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
             return "USDC";
           }
         })();
-        const researchWhitelist = (policy?.allowedTokens ?? ["ETH", "ARB", "USDC", "LINK"]).filter(
+        const discoveryCandidates = tokenDiscovery?.candidates ?? [];
+        const configuredTokens = getConfiguredDemoTokens().map((token) => token.symbol);
+        const researchWhitelist = (discoveryCandidates.length > 0
+          ? discoveryCandidates.map((candidate) => candidate.symbol)
+          : (policy?.allowedTokens ?? configuredTokens)
+        ).filter(
           (symbol) => symbol.toUpperCase() !== sessionAssetSymbol
         );
 
@@ -49,7 +55,11 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
           throw new Error("The current policy only whitelists the session asset. Add at least one tradable output token.");
         }
 
-        const ranking = await fetchResearchRanking(researchWhitelist, "neutral");
+        const ranking = await fetchResearchRanking(
+          researchWhitelist,
+          "neutral",
+          discoveryCandidates.length > 0 ? discoveryCandidates : undefined
+        );
         setResearchResult(ranking.data, ranking.delivery.source);
 
         const explain = await fetchResearchExplanation(
@@ -64,7 +74,7 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
     });
   }
 
-  const priceUp = recommendation?.price_change_pct_24h !== undefined && recommendation.price_change_pct_24h >= 0;
+  const priceUp = typeof recommendation?.price_change_pct_24h === "number" && recommendation.price_change_pct_24h >= 0;
 
   return (
     <SurfaceCard className="space-y-5">
@@ -75,14 +85,18 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">Research Agent</h3>
-            <p className="text-sm leading-6 text-slate-300">Python agent scores tokens from live market data, then hands the ranking to TypeScript for review.</p>
+            <p className="text-sm leading-6 text-slate-300">
+              Python agent scores the saved whitelist or discovered token set, then ChainGPT explains the top candidate.
+            </p>
           </div>
         </div>
         {recommendation ? <MetricPill label="Top pick" value={recommendation.symbol} /> : null}
       </div>
 
       {!recommendation ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">No research ranking yet. Trigger the agent to score the token whitelist.</div>
+        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">
+          No research ranking yet. Trigger the agent to score {tokenDiscovery ? "the discovered candidates" : "the token whitelist"}.
+        </div>
       ) : (
         <>
           {/* Source badges */}
@@ -96,6 +110,18 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
               </Badge>
             ) : null}
             {recommendation.market_source ? <Badge variant="muted">{recommendation.market_source}</Badge> : null}
+            {recommendation.chain_label ? <Badge variant="muted">{recommendation.chain_label}</Badge> : null}
+            {recommendation.execution_status ? (
+              <Badge variant={recommendation.execution_status === "executable" ? "success" : recommendation.execution_status === "needs_allowlist" ? "warning" : "muted"}>
+                {recommendation.execution_status.replaceAll("_", " ")}
+              </Badge>
+            ) : null}
+            {researchExplanation?.provider ? (
+              <Badge variant={researchExplanation.provider.includes("ChainGPT") ? "success" : "muted"}>
+                {researchExplanation.provider}
+                {researchExplanation.model ? ` · ${researchExplanation.model}` : ""}
+              </Badge>
+            ) : null}
           </div>
 
           {/* Verdict sentence */}
@@ -129,14 +155,14 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
                 )}
               </div>
               <span className={`text-sm font-semibold ${priceUp ? "text-emerald-200" : "text-rose-200"}`}>
-                {recommendation.price_change_pct_24h !== undefined ? formatPct(recommendation.price_change_pct_24h) : "n/a"}
+                {typeof recommendation.price_change_pct_24h === "number" ? formatPct(recommendation.price_change_pct_24h) : "n/a"}
               </span>
               <span className="text-[10px] uppercase tracking-[0.16em] text-slate-500">24h</span>
             </div>
             <div className="flex flex-col items-center gap-1">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
                 <span className="text-xs font-semibold text-white">
-                  {recommendation.volume_24h_usd !== undefined ? formatUsd(recommendation.volume_24h_usd) : "n/a"}
+                  {typeof recommendation.volume_24h_usd === "number" ? formatUsd(recommendation.volume_24h_usd) : "n/a"}
                 </span>
               </div>
               <span className="text-[10px] uppercase tracking-[0.16em] text-slate-500">Volume</span>
@@ -148,12 +174,22 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
             <div className="flex items-center gap-2">
               <Badge variant="default">{recommendation.symbol}</Badge>
               <Badge variant="muted">Expected move {recommendation.expected_move_pct.toFixed(1)}%</Badge>
-              {recommendation.market_price_usd !== undefined ? (
+              {typeof recommendation.market_price_usd === "number" ? (
                 <Badge variant="muted">{formatUsd(recommendation.market_price_usd)}</Badge>
               ) : null}
             </div>
             <p className="text-sm leading-6 text-slate-200">{researchExplanation?.summary ?? recommendation.thesis}</p>
             <p className="text-sm leading-6 text-slate-400">{recommendation.risk_note}</p>
+            {recommendation.dex_url ? (
+              <a
+                href={recommendation.dex_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex text-xs font-medium text-cyan-200 transition hover:text-cyan-100"
+              >
+                View market pair
+              </a>
+            ) : null}
             {researchExplanation?.checks.length ? (
               <div className="space-y-1.5 border-t border-white/5 pt-3">
                 {researchExplanation.checks.map((check) => (
@@ -181,9 +217,10 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
               </button>
               {showShortlist
                 ? research.candidates.map((candidate, index) => (
-                    <div key={`${candidate.symbol}-${index}`} className="glass-outline flex items-center justify-between rounded-3xl p-4 text-sm text-slate-300">
+                    <div key={`${candidate.symbol}-${candidate.chain_id ?? "default"}-${index}`} className="glass-outline flex items-center justify-between gap-4 rounded-3xl p-4 text-sm text-slate-300">
                       <span>
                         #{index + 1} {candidate.symbol}
+                        {candidate.chain_label ? <span className="ml-2 text-xs text-slate-500">{candidate.chain_label}</span> : null}
                       </span>
                       <span>
                         score {candidate.score.toFixed(1)} / confidence {candidate.confidence.toFixed(1)}

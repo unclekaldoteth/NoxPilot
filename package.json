@@ -9,7 +9,7 @@
     "lint:web": "pnpm --filter @noxpilot/web lint",
     "build:nox-sdk": "pnpm --filter @noxpilot/nox-sdk run build",
     "typecheck:nox-sdk": "pnpm --filter @noxpilot/nox-sdk run typecheck",
-    "dev:agent": "cd apps/agent && python3 -m uvicorn main:app --reload",
+    "dev:agent": "cd apps/agent && ./.venv/bin/python -m uvicorn main:app --reload --port 8010",
     "contracts:build": "cd contracts && forge build"
   },
   "devDependencies": {

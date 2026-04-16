@@ -10,6 +10,7 @@ import {
   Wallet,
   Settings2,
   LockKeyhole,
+  Search,
   LineChart,
   ShieldCheck,
   WalletCards,
@@ -49,10 +50,17 @@ const WIZARD_STEPS: WizardStep[] = [
     icon: <LockKeyhole className="h-4 w-4" />
   },
   {
+    key: "discover",
+    label: "Discover Tokens",
+    shortLabel: "Discover",
+    description: "Find category-based candidates across Base, BNB, and Solana.",
+    icon: <Search className="h-4 w-4" />
+  },
+  {
     key: "research",
     label: "Trigger Research",
     shortLabel: "Research",
-    description: "FastAPI agent scores tokens from live market data.",
+    description: "FastAPI agent scores the vetted candidate set.",
     icon: <LineChart className="h-4 w-4" />
   },
   {
@@ -97,6 +105,7 @@ function useCurrentStep() {
     walletConnected,
     topologyReady,
     encryptedPolicy,
+    tokenDiscovery,
     recommendation,
     decision,
     executionWallet,
@@ -109,6 +118,7 @@ function useCurrentStep() {
     walletConnected,
     topologyReady,
     Boolean(encryptedPolicy),
+    Boolean(tokenDiscovery),
     Boolean(recommendation),
     Boolean(decision),
     executionWallet.sessionActive || executionWallet.status === "executed" || executionWallet.status === "settled",

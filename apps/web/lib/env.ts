@@ -62,7 +62,6 @@ export const liveConfigReady = Boolean(
     publicEnv.NEXT_PUBLIC_DEX_QUOTER_ADDRESS &&
     publicEnv.NEXT_PUBLIC_SESSION_ASSET_ADDRESS &&
     publicEnv.NEXT_PUBLIC_TOKEN_ETH_ADDRESS &&
-    publicEnv.NEXT_PUBLIC_TOKEN_ARB_ADDRESS &&
     publicEnv.NEXT_PUBLIC_TOKEN_LINK_ADDRESS
 );
 

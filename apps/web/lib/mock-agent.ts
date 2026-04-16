@@ -1,4 +1,10 @@
-import type { Recommendation, ResearchRankResponse } from "@noxpilot/shared";
+import type {
+  Recommendation,
+  ResearchRankResponse,
+  TokenDiscoveryCandidate,
+  TokenDiscoveryRequest,
+  TokenDiscoveryResponse
+} from "@noxpilot/shared";
 
 function seed(symbol: string, salt: string) {
   return Array.from(`${symbol}:${salt}`).reduce((accumulator, char, index) => {
@@ -41,16 +47,35 @@ export function buildMockRecommendation(symbol: string, portfolioBias: "neutral"
 
 export function buildMockRankResponse(
   whitelist: string[],
-  portfolioBias: "neutral" | "defensive" | "aggressive" = "neutral"
+  portfolioBias: "neutral" | "defensive" | "aggressive" = "neutral",
+  candidates?: TokenDiscoveryCandidate[]
 ): ResearchRankResponse {
-  const candidates = whitelist
-    .map((symbol) => buildMockRecommendation(symbol, portfolioBias))
+  const rankedCandidates = (candidates?.length ? candidates.map((candidate) => candidate.symbol) : whitelist)
+    .map((symbol) => {
+      const discovered = candidates?.find((candidate) => candidate.symbol === symbol);
+      return {
+        ...buildMockRecommendation(symbol, portfolioBias),
+        chain_id: discovered?.chain_id,
+        chain_label: discovered?.chain_label,
+        chain_type: discovered?.chain_type,
+        token_address: discovered?.token_address,
+        pair_address: discovered?.pair_address,
+        dex_id: discovered?.dex_id,
+        dex_url: discovered?.dex_url,
+        category: discovered?.category,
+        liquidity_usd: discovered?.liquidity_usd,
+        execution_status: discovered?.execution_status,
+        execution_note: discovered?.execution_note,
+        risk_flags: discovered?.risk_flags,
+        market_source: discovered ? "dev-mock discovery" : undefined
+      };
+    })
     .sort((left, right) => right.score - left.score);
 
   return {
     generatedAt: new Date().toISOString(),
-    candidates,
-    bestCandidate: candidates[0]
+    candidates: rankedCandidates,
+    bestCandidate: rankedCandidates[0]
   };
 }
 
@@ -77,7 +102,9 @@ export function buildMockExplainResponse(payload: { recommendation: Recommendati
     summary: `${payload.recommendation.symbol} is the top candidate because liquidity, momentum, and sentiment align for a short-duration bounded session.`,
     checks,
     operator_note:
-      "This is research output only. The execution layer still validates budget, token whitelist, session status, and confidential policy thresholds."
+      "This is research output only. The execution layer still validates budget, token whitelist, session status, and confidential policy thresholds.",
+    provider: "Dev mock explainer",
+    model: null
   };
 }
 
@@ -93,4 +120,51 @@ export function buildMockMarketSignals(whitelist: string[]) {
         ? "Volatility is elevated; tighter execution controls are warranted."
         : "Market structure is stable enough for bounded participation."
   }));
+}
+
+export function buildMockDiscoveryResponse(payload: TokenDiscoveryRequest): TokenDiscoveryResponse {
+  const chainLabels: Record<string, { label: string; type: "evm" | "solana" }> = {
+    base: { label: "Base", type: "evm" },
+    bsc: { label: "BNB Chain", type: "evm" },
+    solana: { label: "Solana", type: "solana" }
+  };
+  const names = ["PEPE", "BONK", "TOSHI", "MOG", "WIF", "CAT"];
+  const candidates = payload.chains.flatMap((chain, chainIndex) => {
+    const meta = chainLabels[chain];
+    return names.slice(0, 2).map((symbol, index) => ({
+      symbol: `${symbol}${chainIndex}${index}`,
+      name: `${symbol} ${meta.label} mock`,
+      chain_id: chain,
+      chain_label: meta.label,
+      chain_type: meta.type,
+      token_address: `${chain}-mock-${symbol.toLowerCase()}-${index}`,
+      pair_address: `${chain}-pair-${symbol.toLowerCase()}-${index}`,
+      dex_id: chain === "solana" ? "raydium" : "uniswap",
+      dex_url: "https://dexscreener.com",
+      category: payload.category,
+      price_usd: Number((0.0001 * (index + 1)).toFixed(8)),
+      price_change_pct_24h: signal(symbol, chain, -15, 45),
+      volume_24h_usd: signal(symbol, "volume", 10000, 250000),
+      liquidity_usd: signal(symbol, "liquidity", 25000, 500000),
+      market_cap_usd: signal(symbol, "market-cap", 250000, 5000000),
+      fdv_usd: signal(symbol, "fdv", 250000, 8000000),
+      pair_created_at: new Date(Date.now() - signal(symbol, "age", 1, 30) * 86400000).toISOString(),
+      quote_token_symbol: chain === "solana" ? "SOL" : chain === "bsc" ? "WBNB" : "WETH",
+      txns_24h: signal(symbol, "txns", 25, 800),
+      execution_status: chain === "solana" ? "research_only" : "needs_allowlist",
+      execution_note:
+        chain === "solana"
+          ? "Solana discovery is research-only until a Solana execution path exists."
+          : "EVM discovery requires chain deployment and explicit allowlisting before execution.",
+      risk_flags: index === 0 ? [] : ["thin liquidity"]
+    })) satisfies TokenDiscoveryCandidate[];
+  });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    source: "dev-mock discovery",
+    category: payload.category,
+    chains: payload.chains,
+    candidates: candidates.slice(0, payload.limit)
+  };
 }

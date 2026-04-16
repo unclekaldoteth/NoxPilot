@@ -42,6 +42,12 @@ export function evaluateExecution(input: EvaluationInput): ExecutionDecision {
   if (input.paused) {
     reasons.push("System is paused by the operator.");
   }
+  if (input.recommendation.execution_status && input.recommendation.execution_status !== "executable") {
+    reasons.push(
+      input.recommendation.execution_note ??
+        "Recommended token is research-only until its chain and token address are explicitly configured for execution."
+    );
+  }
   if (!input.policy.allowedTokens.includes(input.recommendation.symbol)) {
     reasons.push("Recommended token is outside the allowed token list.");
   }

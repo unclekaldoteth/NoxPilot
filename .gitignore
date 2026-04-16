@@ -20,7 +20,9 @@ yarn-error.log*
 
 # Next.js / frontend build output
 .next/
+.next-dev/
 **/.next/
+**/.next-dev/
 out/
 build/
 dist/

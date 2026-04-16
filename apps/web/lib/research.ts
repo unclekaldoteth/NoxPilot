@@ -2,10 +2,15 @@ import {
   ResearchMockMarketResponseSchema,
   ResearchExplainResponseSchema,
   ResearchRankResponseSchema,
+  TokenDiscoveryResponseSchema,
   type Recommendation,
   type ResearchMockMarketResponse,
   type ResearchExplainResponse,
-  type ResearchRankResponse
+  type ResearchRankResponse,
+  type TokenDiscoveryCandidate,
+  type TokenDiscoveryChain,
+  type TokenDiscoveryCategory,
+  type TokenDiscoveryResponse
 } from "@noxpilot/shared";
 
 export type ResearchDeliverySource = "agent" | "mock";
@@ -39,14 +44,15 @@ async function readError(response: Response) {
 
 export async function fetchResearchRanking(
   whitelist: string[],
-  portfolioBias: "neutral" | "defensive" | "aggressive"
+  portfolioBias: "neutral" | "defensive" | "aggressive",
+  candidates?: TokenDiscoveryCandidate[]
 ): Promise<ResearchFetchResult<ResearchRankResponse>> {
   const response = await fetch("/api/research/rank", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
     },
-    body: JSON.stringify({ whitelist, portfolio_bias: portfolioBias })
+    body: JSON.stringify({ whitelist, portfolio_bias: portfolioBias, candidates })
   });
 
   if (!response.ok) {
@@ -55,6 +61,32 @@ export async function fetchResearchRanking(
 
   return {
     data: ResearchRankResponseSchema.parse(await response.json()),
+    delivery: extractDelivery(response)
+  };
+}
+
+export async function fetchTokenDiscovery(input: {
+  category: TokenDiscoveryCategory;
+  chains: TokenDiscoveryChain[];
+  limit?: number;
+  min_liquidity_usd?: number;
+  min_volume_24h_usd?: number;
+  risk_mode?: "conservative" | "balanced" | "aggressive";
+}): Promise<ResearchFetchResult<TokenDiscoveryResponse>> {
+  const response = await fetch("/api/research/discover", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(input)
+  });
+
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+
+  return {
+    data: TokenDiscoveryResponseSchema.parse(await response.json()),
     delivery: extractDelivery(response)
   };
 }
@@ -87,7 +119,7 @@ export async function fetchResearchExplanation(
 }
 
 export async function fetchMarketSnapshot(whitelist: string[]): Promise<ResearchFetchResult<ResearchMockMarketResponse>> {
-  const response = await fetch("/api/research/mock-market", {
+  const response = await fetch("/api/research/market", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

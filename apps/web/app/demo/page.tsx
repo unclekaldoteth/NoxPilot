@@ -6,6 +6,7 @@ import { WalletConnectButton } from "@/components/noxpilot/wallet-connect-button
 import { Button } from "@/components/ui/button";
 import { PolicySetupForm } from "@/components/noxpilot/policy-setup-form";
 import { EncryptedPolicySummaryCard } from "@/components/noxpilot/encrypted-policy-summary-card";
+import { TokenDiscoveryCard } from "@/components/noxpilot/token-discovery-card";
 import { ResearchRecommendationCard } from "@/components/noxpilot/research-recommendation-card";
 import { ExecutionDecisionCard } from "@/components/noxpilot/execution-decision-card";
 import { FundingCard } from "@/components/noxpilot/funding-card";
@@ -16,7 +17,18 @@ import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { Loader2, Settings2 } from "lucide-react";
 
 export default function DemoPage() {
-  const { initializeTopology, executeTrade, executionWallet, isInitializing, isExecuting } = useNoxPilot();
+  const {
+    initializeTopology,
+    executeTrade,
+    executionWallet,
+    isInitializing,
+    isExecuting,
+    walletConnected,
+    networkSupported,
+    liveConfigReady
+  } = useNoxPilot();
+
+  const canInitializeTopology = walletConnected && networkSupported && liveConfigReady && !isInitializing;
 
   return (
     <div className="container space-y-8 py-12">
@@ -43,13 +55,19 @@ export default function DemoPage() {
           <Button
             variant="secondary"
             onClick={() => void initializeTopology()}
-            disabled={isInitializing}
+            disabled={!canInitializeTopology}
           >
             {isInitializing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Initializing On-Chain…
               </>
+            ) : !walletConnected ? (
+              "Connect Wallet First"
+            ) : !networkSupported ? (
+              "Switch to Arbitrum Sepolia"
+            ) : !liveConfigReady ? (
+              "Set Live Contract Env First"
             ) : (
               <>
                 <Settings2 className="mr-2 h-4 w-4" />
@@ -65,16 +83,19 @@ export default function DemoPage() {
           <EncryptedPolicySummaryCard />
         </div>
 
-        {/* Step 4: Research */}
+        {/* Step 4: Discover Tokens */}
+        <TokenDiscoveryCard interactive />
+
+        {/* Step 5: Research */}
         <ResearchRecommendationCard interactive />
 
-        {/* Step 5: Execution Decision */}
+        {/* Step 6: Execution Decision */}
         <ExecutionDecisionCard interactive />
 
-        {/* Step 6: Fund Session */}
+        {/* Step 7: Fund Session */}
         <FundingCard interactive />
 
-        {/* Step 7: Execute Swap */}
+        {/* Step 8: Execute Swap */}
         <div className="space-y-4">
           <p className="text-sm leading-6 text-slate-300">
             This prepares a confidential confidence-approval handle, verifies it on-chain, quotes the swap, and executes one real exact-input swap.
@@ -96,10 +117,10 @@ export default function DemoPage() {
           </Button>
         </div>
 
-        {/* Step 8: Settlement */}
+        {/* Step 9: Settlement */}
         <SettlementCard interactive />
 
-        {/* Step 9: Safety Controls */}
+        {/* Step 10: Safety Controls */}
         <SafetyControlsPanel />
       </DemoWizard>
 

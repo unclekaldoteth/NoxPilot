@@ -12,7 +12,7 @@
         "./*"
       ],
       "@noxpilot/nox-sdk": [
-        "../../packages/nox-sdk"
+        "../../packages/nox-sdk/src/index.ts"
       ],
       "@noxpilot/shared": [
         "../../packages/shared/src/index.ts"
@@ -25,10 +25,11 @@
     "isolatedModules": true
   },
   "include": [
-    "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "next-env.d.ts",
+    ".next-dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

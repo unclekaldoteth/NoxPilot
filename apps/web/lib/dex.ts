@@ -44,6 +44,23 @@ function readTokenAddress(symbol: SupportedTokenSymbol): Address {
   return value;
 }
 
+function maybeReadTokenAddress(symbol: SupportedTokenSymbol): Address | null {
+  const value =
+    symbol === "ETH"
+      ? publicEnv.NEXT_PUBLIC_TOKEN_ETH_ADDRESS
+      : symbol === "ARB"
+        ? publicEnv.NEXT_PUBLIC_TOKEN_ARB_ADDRESS
+        : symbol === "LINK"
+          ? publicEnv.NEXT_PUBLIC_TOKEN_LINK_ADDRESS
+          : publicEnv.NEXT_PUBLIC_SESSION_ASSET_ADDRESS;
+
+  if (!value || !isAddress(value)) {
+    return null;
+  }
+
+  return value;
+}
+
 export function getDexRouterAddress(): Address {
   const value = publicEnv.NEXT_PUBLIC_DEX_ROUTER_ADDRESS;
   if (!value || !isAddress(value)) {
@@ -89,7 +106,22 @@ export function getTokenConfig(symbol: string): LiveTokenConfig {
 }
 
 export function getConfiguredDemoTokens(): LiveTokenConfig[] {
-  return DEFAULT_ALLOWED_TOKENS.map((symbol) => getTokenConfig(symbol));
+  return DEFAULT_ALLOWED_TOKENS.flatMap((symbol) => {
+    const normalized = normalizeSymbol(symbol);
+    const address = maybeReadTokenAddress(normalized);
+    if (!address) {
+      return [];
+    }
+
+    return [
+      {
+        symbol: normalized,
+        address,
+        decimals: TOKEN_DECIMALS[normalized],
+        poolFee: getDefaultPoolFee()
+      }
+    ];
+  });
 }
 
 export function usdToSessionAssetUnits(amountUsd: number): bigint {

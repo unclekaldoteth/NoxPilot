@@ -13,6 +13,15 @@ import { SurfaceCard, Tooltip } from "@noxpilot/ui";
 import { cn } from "@/lib/utils";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { buildDefaultPolicyInput } from "@/lib/contracts";
+import { getConfiguredDemoTokens } from "@/lib/dex";
+
+const BPS_PER_PERCENT = 100;
+const MIN_SLIPPAGE_PERCENT = 0.05;
+const MAX_SLIPPAGE_PERCENT = 5;
+
+type PolicySetupFormValues = Omit<PrivatePolicyInput, "maxSlippageBps"> & {
+  maxSlippagePct: number;
+};
 
 function FieldLabel({ htmlFor, label, tooltip }: { htmlFor: string; label: string; tooltip: string }) {
   return (
@@ -25,25 +34,50 @@ function FieldLabel({ htmlFor, label, tooltip }: { htmlFor: string; label: strin
   );
 }
 
+function toFormValues(nextPolicy: PrivatePolicyInput): PolicySetupFormValues {
+  return {
+    ...nextPolicy,
+    maxSlippagePct: nextPolicy.maxSlippageBps / BPS_PER_PERCENT
+  };
+}
+
+function formatPercent(value: number | null | undefined) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
+    return "0";
+  }
+
+  return value.toFixed(2).replace(/\.?0+$/, "");
+}
+
 export function PolicySetupForm() {
-  const { policy, savePolicy, mode, noxClientConfigReady, walletConnected, networkSupported, isPolicySaving } = useNoxPilot();
+  const {
+    policy,
+    savePolicy,
+    mode,
+    noxClientConfigReady,
+    walletConnected,
+    networkSupported,
+    isPolicySaving,
+    policySaveMessage
+  } = useNoxPilot();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<PrivatePolicyInput>({
-    defaultValues: policy ?? buildDefaultPolicyInput()
+  const form = useForm<PolicySetupFormValues>({
+    defaultValues: toFormValues(policy ?? buildDefaultPolicyInput())
   });
 
   useEffect(() => {
-    form.reset(policy ?? buildDefaultPolicyInput());
+    form.reset(toFormValues(policy ?? buildDefaultPolicyInput()));
   }, [form, policy]);
 
   const selectedTokens = form.watch("allowedTokens");
+  const availableTokens = mode === "live" ? getConfiguredDemoTokens().map((token) => token.symbol) : DEFAULT_ALLOWED_TOKENS;
   const fieldCount = 8;
   const filledFields = [
     form.watch("dailyBudgetUsd") > 0,
     form.watch("minConfidenceScore") > 0,
-    form.watch("maxSlippageBps") > 0,
+    form.watch("maxSlippagePct") > 0,
     selectedTokens.length > 0,
     form.watch("allowedProtocol")?.length > 0,
     form.watch("sessionExpiryHours") > 0,
@@ -61,11 +95,15 @@ export function PolicySetupForm() {
     );
   }
 
-  function onSubmit(values: PrivatePolicyInput) {
+  function onSubmit(values: PolicySetupFormValues) {
     startTransition(async () => {
       try {
         setError(null);
-        await savePolicy(PrivatePolicyInputSchema.parse(values));
+        const parsedPolicy = PrivatePolicyInputSchema.parse({
+          ...values,
+          maxSlippageBps: Math.round(values.maxSlippagePct * BPS_PER_PERCENT)
+        });
+        await savePolicy(parsedPolicy);
       } catch (submissionError) {
         setError(submissionError instanceof Error ? submissionError.message : "Policy encryption failed.");
       }
@@ -162,17 +200,28 @@ export function PolicySetupForm() {
               ) : null}
             </div>
             <div className="space-y-2">
-              <FieldLabel htmlFor="maxSlippageBps" label="Max slippage (bps)" tooltip="Maximum allowed slippage in basis points. 100 bps = 1%." />
+              <FieldLabel htmlFor="maxSlippagePct" label="Max slippage (%)" tooltip="Maximum allowed slippage as a percentage. Internally this is converted to basis points for the contract path." />
               <Input
-                id="maxSlippageBps"
+                id="maxSlippagePct"
                 type="number"
-                inputMode="numeric"
+                inputMode="decimal"
                 autoComplete="off"
-                placeholder="100…"
-                {...form.register("maxSlippageBps", { valueAsNumber: true })}
+                placeholder="0.45…"
+                step="0.01"
+                {...form.register("maxSlippagePct", {
+                  valueAsNumber: true,
+                  min: {
+                    value: MIN_SLIPPAGE_PERCENT,
+                    message: `Max slippage must be at least ${formatPercent(MIN_SLIPPAGE_PERCENT)}%.`
+                  },
+                  max: {
+                    value: MAX_SLIPPAGE_PERCENT,
+                    message: `Max slippage must be at most ${formatPercent(MAX_SLIPPAGE_PERCENT)}%.`
+                  }
+                })}
               />
-              {form.formState.errors.maxSlippageBps ? (
-                <p className="text-xs text-rose-300">{form.formState.errors.maxSlippageBps.message}</p>
+              {form.formState.errors.maxSlippagePct ? (
+                <p className="text-xs text-rose-300">{form.formState.errors.maxSlippagePct.message}</p>
               ) : null}
             </div>
           </div>
@@ -182,7 +231,7 @@ export function PolicySetupForm() {
         <div className="space-y-3">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-cyan-200/60">🪙 Allowed Tokens</p>
           <div className="flex flex-wrap gap-2">
-            {DEFAULT_ALLOWED_TOKENS.map((token) => {
+            {availableTokens.map((token) => {
               const active = selectedTokens.includes(token);
               return (
                 <button
@@ -232,7 +281,7 @@ export function PolicySetupForm() {
             The agent can spend up to <span className="text-white font-medium">${form.watch("dailyBudgetUsd")}</span> per session
             on tokens <span className="text-cyan-200">[{selectedTokens.join(", ")}]</span>,
             only if confidence ≥ <span className="text-white font-medium">{form.watch("minConfidenceScore")}</span>,
-            with max <span className="text-white font-medium">{form.watch("maxSlippageBps")} bps</span> slippage.
+            with max <span className="text-white font-medium">{formatPercent(form.watch("maxSlippagePct"))}%</span> slippage.
             Session expires after <span className="text-white font-medium">{form.watch("sessionExpiryHours")}h</span>.
           </p>
         </div>
@@ -244,8 +293,11 @@ export function PolicySetupForm() {
         ) : null}
 
         {error ? <p aria-live="polite" className="text-sm text-rose-300">{error}</p> : null}
+        {loading && policySaveMessage ? (
+          <p aria-live="polite" className="text-sm text-cyan-200">{policySaveMessage}</p>
+        ) : null}
         <Button type="submit" disabled={loading}>
-          {loading ? "Encrypting & Writing On-Chain…" : "Encrypt & Save Policy On-Chain"}
+          {loading ? (policySaveMessage ?? "Encrypting & Writing On-Chain...") : "Encrypt & Save Policy On-Chain"}
         </Button>
       </form>
     </SurfaceCard>

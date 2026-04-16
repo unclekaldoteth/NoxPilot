@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   if (devMocksEnabled) {
     return NextResponse.json(
-      ResearchRankResponseSchema.parse(buildMockRankResponse(payload.whitelist, payload.portfolio_bias)),
+      ResearchRankResponseSchema.parse(buildMockRankResponse(payload.whitelist, payload.portfolio_bias, payload.candidates)),
       {
         headers: buildAgentResponseHeaders("mock")
       }

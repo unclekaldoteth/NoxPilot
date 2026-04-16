@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 from schemas import Recommendation, ResearchExplainResponse
+from services.chaingpt import ChainGPTUnavailable, chaingpt_configured, explain_with_chaingpt
+
+
+LOCAL_EXPLAINER_PROVIDER = "Local deterministic explainer"
 
 
 def explain_recommendation(
@@ -35,4 +39,26 @@ def explain_recommendation(
         "session status, and confidential policy thresholds."
     )
 
-    return ResearchExplainResponse(summary=summary, checks=checks, operator_note=operator_note)
+    return ResearchExplainResponse(
+        summary=summary,
+        checks=checks,
+        operator_note=operator_note,
+        provider=LOCAL_EXPLAINER_PROVIDER,
+        model=None,
+    )
+
+
+async def explain_recommendation_with_chain_gpt(
+    recommendation: Recommendation,
+    min_confidence: float | None = None,
+    allowed_protocol: str | None = None,
+) -> ResearchExplainResponse:
+    if not chaingpt_configured():
+        return explain_recommendation(recommendation, min_confidence, allowed_protocol)
+
+    try:
+        return await explain_with_chaingpt(recommendation, min_confidence, allowed_protocol)
+    except ChainGPTUnavailable:
+        fallback = explain_recommendation(recommendation, min_confidence, allowed_protocol)
+        fallback.checks.append("ChainGPT analyst layer was unavailable, so NoxPilot returned the local deterministic explanation.")
+        return fallback
