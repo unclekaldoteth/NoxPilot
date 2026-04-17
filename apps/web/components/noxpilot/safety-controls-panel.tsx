@@ -28,9 +28,9 @@ export function SafetyControlsPanel() {
             <ShieldAlert className="h-5 w-5 text-rose-200" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-white">Safety Controls</h3>
+            <h3 className="text-lg font-semibold text-white">Emergency Controls</h3>
             <p className="text-sm leading-6 text-slate-300">
-              Pause the system or revoke a session — the vault is never exposed to uncapped execution authority.
+              Pause the system or revoke the active session if you need to stop the live flow immediately.
             </p>
           </div>
         </div>

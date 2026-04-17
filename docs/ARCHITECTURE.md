@@ -11,6 +11,12 @@ NoxPilot has four execution domains:
 
 The v1 product path is intentionally narrow: discover and research a token, execute one bounded ERC-20 buy on Arbitrum Sepolia, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
 
+The operator UX now mirrors that path explicitly:
+
+- `/` frames the full 3-minute story: connect wallet, discover token, bounded swap, wrap confidentially
+- `/dashboard` is a read-only monitoring surface with a shared `Next action` banner that routes operators back into the guided demo
+- `/demo` is a progressive three-phase flow: `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
+
 ## Current Live Deployment
 
 Arbitrum Sepolia snapshot updated April 17, 2026:
@@ -81,8 +87,21 @@ Dashboard / timeline
   -> render live contract state
   -> render live research payloads
   -> render confidential position metadata
+  -> compute shared next-action state for dashboard and demo
+  -> keep dashboard read-only and move live actions into the guided demo surface
   -> append only real actions and real agent responses
 ```
+
+## UX Flow Model
+
+The frontend now uses a shared operator-flow model rather than exposing every control equally.
+
+- a shared `Next action` banner summarizes the current live task on `/dashboard` and `/demo`
+- the guided demo reveals only the current actionable step and collapses future work until prerequisites are met
+- the dashboard keeps the same live state cards but no longer presents itself as an action surface
+- mobile uses a compact progress view with a `See all steps` toggle instead of a long always-open checklist
+
+This matters architecturally because the UI now reflects the real execution boundary more honestly: monitoring lives on the dashboard, live writes live in the guided demo, and both surfaces derive their guidance from the same app state.
 
 ## Contract Role Split
 
@@ -160,7 +179,7 @@ The confidential asset path begins after the public swap. The wrapper deposit is
 - the live trading path is intentionally one exact-input swap route, not a generic DEX aggregation engine
 - only the daily-budget and min-confidence policy fields are validated through the Nox proof path on-chain
 - v1 confidential wrapping is Arbitrum Sepolia-only
-- the currently deployed live wrapper set is WETH and LINK; ARB is still unset
+- the currently deployed live wrapper set is WETH, ARB, and LINK
 - Base and BNB remain future execution expansion until official NoxCompute, gateway, subgraph, Solidity SDK resolver, contract deployment, router, and token allowlist support are available
 - Solana remains research-only unless a separate Solana wallet, program, routing, and confidential execution path is built
 - the first acquired amount may be observable from public swap and wrapper transactions

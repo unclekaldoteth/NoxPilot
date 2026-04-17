@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Search, ShieldCheck } from "lucide-react";
 import type { TokenDiscoveryCategory, TokenDiscoveryChain } from "@noxpilot/shared";
@@ -178,8 +179,15 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
           </div>
         </div>
       ) : (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">
-          No discovery run yet. Start with meme tokens across Base, BNB, and Solana for a wider research universe.
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>No discovery run yet. Start with a category search across Base, BNB, and Solana to widen the research universe.</p>
+          {!interactive ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-discover">Discover tokens in demo</Link>
+            </Button>
+          ) : (
+            <p className="text-slate-500">Pick a category and chain mix above, then launch discovery.</p>
+          )}
         </div>
       )}
 

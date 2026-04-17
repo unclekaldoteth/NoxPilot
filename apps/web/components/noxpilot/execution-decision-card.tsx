@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ShieldCheck, ShieldX } from "lucide-react";
 import { CheckItem, MetricPill, SurfaceCard } from "@noxpilot/ui";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,16 @@ export function ExecutionDecisionCard({ interactive = false }: { interactive?: b
       </div>
 
       {!decision ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">No decision yet. Click evaluate once you have a research recommendation.</div>
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>No execution decision yet. Review the research result first, then let NoxPilot check the policy, funding, and wrapper constraints.</p>
+          {!interactive ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-decision">Review decision in demo</Link>
+            </Button>
+          ) : (
+            <p className="text-slate-500">Use the decision button below once the research agent has produced a top candidate.</p>
+          )}
+        </div>
       ) : (
         <>
           {/* Big verdict */}

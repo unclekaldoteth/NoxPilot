@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { ChevronDown, Clock } from "lucide-react";
 import { DotStatus, SurfaceCard } from "@noxpilot/ui";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const ACTOR_COLORS: Record<string, string> = {
@@ -43,8 +45,11 @@ export function ActivityTimeline() {
 
       <div className="space-y-2">
         {activity.length === 0 ? (
-          <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">
-            No activity yet. Connect wallet and proceed through the flow to see real events here.
+          <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+            <p>No activity yet. Complete the guided demo and every live action, ranking result, and state change will appear here.</p>
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-connect">Start the guided demo</Link>
+            </Button>
           </div>
         ) : null}
         {visible.map((item, idx) => (

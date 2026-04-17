@@ -161,8 +161,11 @@ Privacy boundary:
 ## 10. Feature List
 
 - polished landing page with product story
-- dashboard with vault, execution, policy, discovery, research, decision, funding, confidential position, settlement, and safety views
-- manual demo stepper for the live judged flow
+- landing page framed around the operator journey: connect wallet, discover token, bounded swap, wrap confidentially
+- read-only dashboard with vault, execution, policy, research, decision, funding, confidential position, settlement, system status, activity, and a `Continue in Demo` next-action CTA
+- guided three-phase demo for the live judged flow with progressive disclosure instead of a fully expanded checklist
+- shared `Next action` banner across `/dashboard` and `/demo`
+- readiness banner that explains blocking issues in plain language
 - category and chain token discovery before live research scoring
 - ChainGPT-assisted explanation for top research candidates when configured
 - post-buy confidential wrapping for supported Arbitrum Sepolia ERC-20 outputs
@@ -174,8 +177,13 @@ Privacy boundary:
 
 ## 11. Demo Flow
 
+### Phase 1: Connect & Verify
+
 1. Connect the live owner/admin wallet.
-2. Initialize vault, execution wallet, `ExecutionGuard`, and wrapper relationship against deployed contracts.
+2. Verify vault, execution wallet, `ExecutionGuard`, and wrapper relationship against deployed contracts.
+
+### Phase 2: Set Policy & Research
+
 3. Enter policy values.
 4. Encrypt relevant policy thresholds with the Nox wrapper.
 5. Save policy on-chain and display public-safe metadata.
@@ -183,12 +191,15 @@ Privacy boundary:
 7. Trigger the live research agent to score the vetted candidate set.
 8. Review ranked recommendation and explanation.
 9. Run TypeScript execution decisioning.
+
+### Phase 3: Execute & Close
+
 10. Open a bounded session on-chain.
 11. Execute one bounded live exact-input swap on-chain.
 12. Wrap the acquired ERC-20 into a Nox confidential asset.
 13. Display the confidential position handle.
 14. Let the owner reveal the decrypted confidential balance through the Nox handle client.
-15. Settle the session, unwrap when needed, or pause/revoke the system.
+15. Settle the session, unwrap when needed, or use pause/revoke controls.
 
 ## 12. Rubric Mapping
 
@@ -202,7 +213,11 @@ Privacy boundary:
 
 - the repo boots as a monorepo with documented setup
 - the web app includes `/`, `/dashboard`, `/demo`, and `/trust`
-- the dashboard surfaces all required cards and state views
+- the landing page clearly communicates the full operator journey in one glance
+- the dashboard is visibly read-only, surfaces all required monitoring cards, and points the operator into the guided demo for actions
+- the demo is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
+- the demo shows only the current actionable step expanded while future steps remain collapsed until unlocked
+- the app shows a shared `Next action` banner on `/dashboard` and `/demo`
 - the policy form supports all required fields
 - confidential values can be encrypted through the live Nox wrapper path
 - the FastAPI agent exposes health, rank, explain, market, and discovery-backed research endpoints

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, Shield, Sparkles, X } from "lucide-react";
+import { CircleAlert, Menu, Shield, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,12 +13,11 @@ import { WalletConnectButton } from "./wallet-connect-button";
 const navItems = [
   { href: "/", label: "Overview" },
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/demo", label: "Demo" },
-  { href: "/trust", label: "Trust" }
+  { href: "/demo", label: "Guided Demo" }
 ];
 
 export function SiteHeader() {
-  const { mode, setMode, liveConfigReady, lastError } = useNoxPilot();
+  const { mode, setMode, devMocksEnabled, liveConfigReady, lastError } = useNoxPilot();
   const pathname = usePathname();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
@@ -36,7 +35,9 @@ export function SiteHeader() {
             </div>
           </Link>
           <div className="flex items-center gap-2">
-            <Badge variant={mode === "live" ? "success" : "warning"}>{mode === "live" ? "Live-ready" : "Mock-safe"}</Badge>
+            <Badge variant={mode === "live" ? "success" : "warning"}>
+              {mode === "live" ? "Live flow" : "Mock flow"}
+            </Badge>
             {/* Mobile menu toggle */}
             <button
               type="button"
@@ -73,35 +74,52 @@ export function SiteHeader() {
             })}
           </nav>
 
-          {/* Mock/Live toggle — visible for judges */}
-          <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
-            {(["mock", "live"] as const).map((option) => (
-              <Button
-                key={option}
-                variant={mode === option ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setMode(option)}
-                className={cn(mode !== option && "text-slate-300")}
-              >
-                {option === "mock" ? "Mock" : "Live"}
-              </Button>
-            ))}
-          </div>
+          {devMocksEnabled ? (
+            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] px-2 py-1">
+              <span className="px-2 text-xs uppercase tracking-[0.18em] text-slate-500">Environment</span>
+              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/60 p-1">
+                {(["mock", "live"] as const).map((option) => (
+                  <Button
+                    key={option}
+                    variant={mode === option ? "default" : "ghost"}
+                    size="sm"
+                    onClick={() => setMode(option)}
+                    className={cn(mode !== option && "text-slate-300")}
+                  >
+                    {option === "mock" ? "Mock" : "Live"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <Badge variant="muted" className="hidden lg:inline-flex">
+              Live judged flow
+            </Badge>
+          )}
 
           {!liveConfigReady ? (
             <Badge variant="muted" className="hidden lg:inline-flex">
               <Sparkles className="mr-2 h-3.5 w-3.5" />
-              Live config incomplete
+              Setup needs attention
             </Badge>
           ) : null}
 
-          {/* Error indicator */}
+          <Link
+            href="/trust"
+            className="text-sm text-slate-400 transition hover:text-white"
+          >
+            Trust model
+          </Link>
+
           {lastError ? (
             <span
               aria-label={`Latest error: ${lastError}`}
-              className="h-2.5 w-2.5 rounded-full bg-rose-400 shadow-[0_0_10px_rgba(251,113,133,0.5)]"
+              className="inline-flex items-center gap-1 rounded-full border border-rose-400/20 bg-rose-400/10 px-2.5 py-1 text-xs text-rose-200"
               title={lastError}
-            />
+            >
+              <CircleAlert className="h-3.5 w-3.5" />
+              Latest issue
+            </span>
           ) : null}
 
           <WalletConnectButton />
@@ -133,19 +151,28 @@ export function SiteHeader() {
               })}
             </nav>
 
-            <div className="flex items-center gap-2 border-t border-white/5 pt-3">
-              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
-                {(["mock", "live"] as const).map((option) => (
-                  <Button
-                    key={option}
-                    variant={mode === option ? "default" : "ghost"}
-                    size="sm"
-                    onClick={() => setMode(option)}
-                    className={cn(mode !== option && "text-slate-300")}
-                  >
-                    {option === "mock" ? "Mock" : "Live"}
-                  </Button>
-                ))}
+            <div className="space-y-3 border-t border-white/5 pt-3">
+              <div className="flex flex-wrap items-center gap-2">
+                {devMocksEnabled ? (
+                  <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+                    {(["mock", "live"] as const).map((option) => (
+                      <Button
+                        key={option}
+                        variant={mode === option ? "default" : "ghost"}
+                        size="sm"
+                        onClick={() => setMode(option)}
+                        className={cn(mode !== option && "text-slate-300")}
+                      >
+                        {option === "mock" ? "Mock" : "Live"}
+                      </Button>
+                    ))}
+                  </div>
+                ) : (
+                  <Badge variant="muted">Live judged flow</Badge>
+                )}
+                <Link href="/trust" className="px-1 text-sm text-slate-400 transition hover:text-white">
+                  Trust model
+                </Link>
               </div>
               <WalletConnectButton />
             </div>

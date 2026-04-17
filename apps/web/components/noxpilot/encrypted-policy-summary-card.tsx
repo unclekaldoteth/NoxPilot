@@ -1,12 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { EyeOff, Lock, Unlock } from "lucide-react";
 import { MetricPill, SurfaceCard } from "@noxpilot/ui";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { truncateAddress } from "@/lib/format";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 
-export function EncryptedPolicySummaryCard() {
+export function EncryptedPolicySummaryCard({ interactive = false }: { interactive?: boolean }) {
   const { encryptedPolicy } = useNoxPilot();
 
   return (
@@ -25,7 +27,18 @@ export function EncryptedPolicySummaryCard() {
       </div>
 
       {!encryptedPolicy ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">No policy stored yet. Save a policy to generate handle references.</div>
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>
+            No private policy saved yet. Store the policy first so NoxPilot can encrypt the budget, confidence threshold, and slippage settings.
+          </p>
+          {interactive ? (
+            <p className="text-slate-500">Use the policy form in this step to create the encrypted handles.</p>
+          ) : (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-policy">Save policy in demo</Link>
+            </Button>
+          )}
+        </div>
       ) : (
         <>
           <div className="flex flex-wrap gap-2">

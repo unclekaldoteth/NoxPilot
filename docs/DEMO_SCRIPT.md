@@ -45,24 +45,28 @@ Say:
 
 Click:
 
-- `Open demo dashboard`
+- `Open guided demo`
 
 Say:
 
-> NoxPilot keeps the research agent separate from the execution authority. The wallet UX, Nox encryption, contract writes, and confidential asset reveal stay on the TypeScript side, while Python only discovers, ranks, and explains.
+> NoxPilot now tells the operator exactly what happens next. The landing page frames the whole journey in one sentence: connect the owner wallet, discover the best candidate, execute one bounded swap, then wrap the result into a confidential asset.
 
 ### 3. Dashboard overview
 
 Point at:
 
+- the `Next action` banner
 - Vault Wallet
 - Execution Wallet
 - System Status
 - Confidential Policy
-- Token Discovery
 - Research Agent Recommendation
 - Execution Decision
 - Confidential Asset or wrapped position state
+
+Say:
+
+> The dashboard is intentionally read-only. It is there to summarize readiness, balances, research, decision state, and the confidential position. Every action routes back into the guided demo so the operator always has one clear next step.
 
 Say:
 
@@ -72,25 +76,26 @@ Say:
 
 Click through:
 
-1. `Connect wallet`
-2. `Initialize live topology`
-3. complete the policy form
-4. `Encrypt & save policy on-chain`
-5. discover token candidates by category and chain
-6. `Trigger live research`
-7. `Evaluate live decision`
-8. `Open bounded session on-chain`
-9. optionally switch to the registered execution wallet
-10. `Execute bounded live swap`
-11. wrap the acquired ERC-20 into a confidential asset
-12. reveal the confidential balance as the owner
-13. `Settle session on-chain`
-14. unwrap if needed
-15. `Pause system`
+1. show the `Next action` banner
+2. in `Connect & Verify`, click `Connect wallet`
+3. click `Verify live setup`
+4. in `Set Policy & Research`, complete the policy form
+5. `Encrypt & save policy on-chain`
+6. discover token candidates by category and chain
+7. `Trigger live research`
+8. `Evaluate decision`
+9. in `Execute & Close`, `Open bounded session on-chain`
+10. optionally switch to the registered execution wallet
+11. `Execute guarded live swap`
+12. wrap the acquired ERC-20 into a confidential asset
+13. reveal the confidential balance as the owner
+14. `Settle session on-chain`
+15. unwrap if needed
+16. show `Emergency Controls` and, if needed, `Pause system`
 
 Say:
 
-> This is the canonical judged path. Every visible success state comes from a real wallet action, a real agent response, a real on-chain state transition, or a Nox handle operation.
+> This is the canonical judged path. The UI no longer dumps the entire system at once. It keeps only the current step expanded, collapses future phases until they unlock, and uses the same next-action logic on desktop and mobile.
 
 ### 5. Explain the scoped execution model
 
@@ -140,6 +145,10 @@ Say:
 ### Proof Points During The Demo
 
 - The app does not show a demo wallet button unless dev mocks were explicitly enabled.
+- The home page clearly states the operator journey: connect, discover, bounded swap, wrap confidentially.
+- The dashboard is visibly read-only and offers `Continue in Demo` instead of mixed action controls.
+- The demo page is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`.
+- The `Next action` banner changes as the live flow progresses.
 - The timeline is empty until real actions occur.
 - Policy save shows only after the handle path and `PolicyVault.updatePolicyWithNox()` succeed.
 - Execution only proceeds after `ExecutionGuard.prepareConfidenceApproval()` and a live Handle `publicDecrypt()` proof confirm the confidential min-confidence gate.

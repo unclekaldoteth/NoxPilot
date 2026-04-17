@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { ArrowUpRight, ArrowDownRight, LineChart } from "lucide-react";
 import { MetricPill, ProgressRing, SurfaceCard } from "@noxpilot/ui";
@@ -100,8 +101,17 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
       </div>
 
       {!recommendation ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">
-          No research ranking yet. Trigger the agent to score {tokenDiscovery ? "the discovered candidates" : "the token whitelist"}.
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>
+            No live ranking yet. Run the research agent to score {tokenDiscovery ? "the discovered candidates" : "the saved token set"} and generate a top pick.
+          </p>
+          {!interactive ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-research">Run research in demo</Link>
+            </Button>
+          ) : (
+            <p className="text-slate-500">Use the live ranking button below to score the current candidate set.</p>
+          )}
         </div>
       ) : (
         <>

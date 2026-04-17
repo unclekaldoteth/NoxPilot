@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Eye, Loader2, LockKeyhole, RefreshCcw, ShieldCheck } from "lucide-react";
 import { MetricPill, SurfaceCard } from "@noxpilot/ui";
 import { Badge } from "@/components/ui/badge";
@@ -66,8 +67,15 @@ export function ConfidentialPositionCard({ interactive = false }: { interactive?
       </div>
 
       {!confidentialPosition ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">
-          No confidential position yet. Execute the guarded swap first, then wrap the acquired ERC-20.
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>No confidential position yet. After the guarded swap executes, wrap the acquired ERC-20 to protect the balance with Nox.</p>
+          {!interactive ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-confidential">Protect position in demo</Link>
+            </Button>
+          ) : (
+            <p className="text-slate-500">This step unlocks after the guarded swap completes.</p>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

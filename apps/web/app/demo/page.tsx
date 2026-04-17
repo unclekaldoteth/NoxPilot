@@ -14,6 +14,7 @@ import { ConfidentialPositionCard } from "@/components/noxpilot/confidential-pos
 import { SettlementCard } from "@/components/noxpilot/settlement-card";
 import { SafetyControlsPanel } from "@/components/noxpilot/safety-controls-panel";
 import { ActivityTimeline } from "@/components/noxpilot/activity-timeline";
+import { NextActionBanner } from "@/components/noxpilot/next-action-banner";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { Loader2, Settings2 } from "lucide-react";
 
@@ -35,23 +36,25 @@ export default function DemoPage() {
     <div className="container space-y-8 py-12">
       <SectionTitle
         eyebrow="Hackathon demo"
-        title="NoxPilot Operator Flow"
-        description="Walk through the complete bounded execution flow step by step. Each step unlocks after the previous one completes."
+        title="Guided Operator Flow"
+        description="Move through one clear live path: connect and verify, set a private policy and rank candidates, then execute and close the run."
       />
+
+      <NextActionBanner surface="demo" />
 
       <DemoWizard>
         {/* Step 1: Connect Wallet */}
         <div className="space-y-4">
           <p className="text-sm leading-6 text-slate-300">
-            Connect a wallet that owns the deployed PolicyVault and administers ExecutionGuard on Arbitrum Sepolia.
+            Connect the wallet that owns the deployed PolicyVault and administers ExecutionGuard on Arbitrum Sepolia.
           </p>
           <WalletConnectButton />
         </div>
 
-        {/* Step 2: Initialize Topology */}
+        {/* Step 2: Verify setup */}
         <div className="space-y-4">
           <p className="text-sm leading-6 text-slate-300">
-            This verifies you own the PolicyVault, registers the execution wallet if needed, and wires the ExecutionGuard controller.
+            This confirms the live operator identity, registers the execution wallet if needed, and wires the execution guard plus confidential wrapper support.
           </p>
           <Button
             variant="secondary"
@@ -61,18 +64,18 @@ export default function DemoPage() {
             {isInitializing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Initializing On-Chain…
+                Verifying On-Chain…
               </>
             ) : !walletConnected ? (
               "Connect Wallet First"
             ) : !networkSupported ? (
               "Switch to Arbitrum Sepolia"
             ) : !liveConfigReady ? (
-              "Set Live Contract Env First"
+              "Finish Live Contract Setup"
             ) : (
               <>
                 <Settings2 className="mr-2 h-4 w-4" />
-                Initialize Live Topology
+                Verify Live Setup
               </>
             )}
           </Button>
@@ -81,7 +84,7 @@ export default function DemoPage() {
         {/* Step 3: Policy Setup & Encryption */}
         <div className="space-y-6">
           <PolicySetupForm />
-          <EncryptedPolicySummaryCard />
+          <EncryptedPolicySummaryCard interactive />
         </div>
 
         {/* Step 4: Discover Tokens */}
@@ -99,7 +102,7 @@ export default function DemoPage() {
         {/* Step 8: Execute Swap */}
         <div className="space-y-4">
           <p className="text-sm leading-6 text-slate-300">
-            This prepares a confidential confidence-approval handle, verifies it on-chain, quotes the swap, and executes one real exact-input swap.
+            This prepares the confidential approval data, verifies it on-chain, quotes the swap, and executes one real exact-input trade through the guard.
           </p>
           <Button
             onClick={() => void executeTrade()}
@@ -111,7 +114,7 @@ export default function DemoPage() {
                 Executing On-Chain…
               </>
             ) : executionWallet.status === "funded" ? (
-              "Execute Bounded Live Swap"
+              "Execute Guarded Live Swap"
             ) : (
               "Complete Funding Step First"
             )}
@@ -123,13 +126,12 @@ export default function DemoPage() {
 
         {/* Step 10: Settlement */}
         <SettlementCard interactive />
-
-        {/* Step 11: Safety Controls */}
-        <SafetyControlsPanel />
       </DemoWizard>
 
-      {/* Activity Timeline sits below the wizard */}
-      <ActivityTimeline />
+      <div id="recent-activity" className="grid gap-6 xl:grid-cols-[1fr_380px]">
+        <ActivityTimeline />
+        <SafetyControlsPanel />
+      </div>
     </div>
   );
 }

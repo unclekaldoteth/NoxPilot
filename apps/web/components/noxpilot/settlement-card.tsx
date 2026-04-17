@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { ArrowRight, ArrowRightLeft, Check, Loader2 } from "lucide-react";
 import { MetricPill, SurfaceCard } from "@noxpilot/ui";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,16 @@ export function SettlementCard({ interactive = false }: { interactive?: boolean 
       </div>
 
       {!settlement ? (
-        <div className="glass-outline rounded-3xl p-4 text-sm text-slate-400">No settlement yet. Execute the swap first, then close the session.</div>
+        <div className="glass-outline space-y-3 rounded-3xl p-4 text-sm text-slate-400">
+          <p>No closed run yet. Settle the active session after the swap completes so the remaining assets return to the vault.</p>
+          {!interactive ? (
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/demo#step-settle">Close run in demo</Link>
+            </Button>
+          ) : (
+            <p className="text-slate-500">Settlement becomes available after the guarded swap executes.</p>
+          )}
+        </div>
       ) : (
         <div className="space-y-4">
           {/* Visual flow diagram */}

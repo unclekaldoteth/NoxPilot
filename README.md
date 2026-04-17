@@ -15,6 +15,51 @@ The judged/demo path is now live by default:
 - live fetched market inputs
 - real on-chain session open / guarded swap execution / confidential wrap / owner reveal / settlement sweep
 
+The operator UX now follows one guided path:
+
+- landing page frames the 3-minute journey: connect wallet, discover token, bounded swap, wrap confidentially
+- dashboard is intentionally read-only and always points the operator back to the guided demo for actions
+- demo flow is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
+- a shared `Next action` banner keeps the current live task obvious on both `/dashboard` and `/demo`
+
+## Guided UX Flow
+
+```mermaid
+flowchart TD
+    A["Landing Page<br/>Connect wallet → discover token → bounded swap → wrap confidentially"] --> B["Dashboard<br/>Read-only live status + Next action"]
+    A --> C["Guided Demo"]
+    B --> C
+
+    subgraph P1["Phase 1: Connect & Verify"]
+      C1["Connect owner wallet"]
+      C2["Verify live setup"]
+      C1 --> C2
+    end
+
+    subgraph P2["Phase 2: Set Policy & Research"]
+      D1["Save private policy"]
+      D2["Discover candidates"]
+      D3["Run live research"]
+      D4["Review execution decision"]
+      D1 --> D2 --> D3 --> D4
+    end
+
+    subgraph P3["Phase 3: Execute & Close"]
+      E1["Open bounded session"]
+      E2["Execute guarded swap"]
+      E3["Wrap acquired ERC-20"]
+      E4["Reveal confidential balance"]
+      E5["Settle session"]
+      E6["Emergency controls<br/>Pause or revoke if needed"]
+      E1 --> E2 --> E3 --> E4 --> E5
+      E5 -.-> E6
+    end
+
+    C --> C1
+    C2 --> D1
+    D4 --> E1
+```
+
 ## Why Hybrid
 
 The split is deliberate:
@@ -151,20 +196,31 @@ pnpm dev:web
 
 ## Canonical Live Demo Flow
 
+The guided UX is now grouped into three phases.
+
+### Phase 1: Connect & Verify
+
 1. Open `/demo`.
 2. Connect the wallet that owns the deployed `PolicyVault` and administers `ExecutionGuard`.
 3. Confirm the wallet is on Arbitrum Sepolia.
-4. Click `Initialize live topology`.
+4. Click `Verify live setup`.
+
+### Phase 2: Set Policy & Research
+
 5. Fill the policy form and click `Encrypt & save policy on-chain`.
-6. Click `Trigger live research`.
-7. Click `Evaluate live decision`.
-8. Click `Open bounded session on-chain`.
-9. Optionally switch to the registered execution wallet if you want to demonstrate delegated execution instead of owner-driven execution.
-10. Click `Execute bounded live swap`.
-11. Click `Wrap acquired ERC-20`.
-12. Click `Reveal confidential balance`.
-13. Click `Settle session on-chain`.
-14. Optionally unwrap or click `Pause system` / `Revoke execution session`.
+6. Optionally run token discovery to widen the candidate set.
+7. Click `Trigger live research`.
+8. Click `Evaluate decision`.
+
+### Phase 3: Execute & Close
+
+9. Click `Open bounded session on-chain`.
+10. Optionally switch to the registered execution wallet if you want to demonstrate delegated execution instead of owner-driven execution.
+11. Click `Execute guarded live swap`.
+12. Click `Wrap acquired ERC-20`.
+13. Click `Reveal confidential balance`.
+14. Click `Settle session on-chain`.
+15. Optionally unwrap or use the emergency controls: `Pause system` / `Revoke execution session`.
 
 ## What Is Real vs Limited
 
@@ -222,6 +278,9 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 ### Proof Points
 
 - The wallet badge shows the connected live address, not a demo wallet.
+- The landing page explains the full operator journey in one glance: connect, discover, bounded swap, wrap confidentially.
+- The dashboard is visibly read-only and points back to the guided demo for actions.
+- The shared `Next action` banner on `/dashboard` and `/demo` always reflects the current live task.
 - The system status card reports whether contracts and Nox config are actually ready.
 - The confidential policy card shows handle references only after wallet-backed encryption succeeds and the Nox-proofed policy write confirms.
 - The execution flow prepares a confidential confidence-approval handle before the swap and only proceeds after the live Handle gateway returns a valid boolean proof.
@@ -229,20 +288,21 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - Session funding, swap execution, and settlement each require real Arbitrum Sepolia transactions.
 - Wrapping and owner reveal require a deployed live wrapper and a real Nox handle operation.
 - The activity timeline stays empty until real actions or live agent responses occur.
+- On mobile, the demo shows a compact current phase with a `See all steps` toggle instead of a long always-open checklist.
 
 ## NO MOCKED DATA VALIDATION CHECKLIST
 
 - [ ] A real wallet is connected.
 - [ ] The wallet is on Arbitrum Sepolia.
 - [ ] `PolicyVault` and `ExecutionGuard` addresses are configured and reachable.
-- [ ] `Initialize live topology` succeeds against the deployed contracts.
+- [ ] `Verify live setup` succeeds against the deployed contracts.
 - [ ] `Encrypt & save policy on-chain` succeeds through the wallet-backed Nox path.
 - [ ] The saved policy appears from real chain state, not seeded dashboard defaults.
 - [ ] `Trigger live research` returns a live FastAPI response.
 - [ ] The research payload contains live market fields such as price, volume, or observed timestamp.
 - [ ] `Evaluate live decision` uses the live recommendation and current session state.
 - [ ] `Open bounded session on-chain` produces a real transaction.
-- [ ] `Execute bounded live swap` produces a real transaction.
+- [ ] `Execute guarded live swap` produces a real transaction.
 - [ ] `Wrap acquired ERC-20` produces a real transaction.
 - [ ] `Reveal confidential balance` succeeds through the live Nox handle client.
 - [ ] `Settle session on-chain` produces a real transaction.

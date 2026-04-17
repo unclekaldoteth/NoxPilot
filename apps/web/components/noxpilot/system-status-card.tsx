@@ -18,7 +18,7 @@ export function SystemStatusCard() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">System Status</h3>
-            <p className="text-sm leading-6 text-slate-300">Execution logic respects confidential policy thresholds and operator safety controls.</p>
+            <p className="text-sm leading-6 text-slate-300">High-level health for the live run: environment, wallet readiness, and session state.</p>
           </div>
         </div>
         <Badge variant={systemPaused ? "danger" : "success"}>{systemPaused ? "Paused" : "Operational"}</Badge>
@@ -28,7 +28,7 @@ export function SystemStatusCard() {
         <div className="glass-outline rounded-3xl p-4">
           <DotStatus tone={mode === "live" ? "success" : "warning"}>{mode === "live" ? "Live judged mode" : "Dev mock mode"}</DotStatus>
           <p className="mt-2 text-sm text-slate-400">
-            {liveConfigReady ? "Contracts, RPC, router, quoter, and token addresses are configured." : "Live contract or DEX configuration is incomplete."}
+            {liveConfigReady ? "Contracts, router, token registry, and wrapper settings are configured for the live path." : "The live contract or DEX configuration is still incomplete."}
           </p>
         </div>
         <div className="glass-outline rounded-3xl p-4">
@@ -39,10 +39,10 @@ export function SystemStatusCard() {
             {walletConnected
               ? networkSupported
                 ? noxClientConfigReady
-                  ? "Wallet, network, Nox config, and the guarded swap path are ready for the judged flow, including the confidential min-confidence gate."
-                  : "Wallet is connected, but public Nox config is still missing."
-                : "Switch the wallet to Arbitrum Sepolia."
-              : "Connect the owner wallet used for the deployed contracts."}
+                  ? "Wallet, network, and private-config plumbing are ready for the guarded live flow."
+                  : "Wallet is connected, but the public Nox configuration is still missing."
+                : "Switch the connected wallet to Arbitrum Sepolia."
+              : "Connect the owner wallet used for the deployed live contracts."}
           </p>
         </div>
       </div>

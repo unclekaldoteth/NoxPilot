@@ -72,9 +72,6 @@ export function WalletConnectButton() {
           Enable dev mock mode
         </Button>
       ) : null}
-      {!walletConnected && !devMocksEnabled ? (
-        <Badge variant="muted">Live judged flow only</Badge>
-      ) : null}
     </div>
   );
 }
