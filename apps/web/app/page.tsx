@@ -36,7 +36,10 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <section className="grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
         <div className="space-y-8 animate-fade-slide-up">
-          <Badge variant="default">Connect wallet → discover token → bounded swap → wrap confidentially</Badge>
+          <Badge variant="default" className="max-w-full whitespace-normal sm:whitespace-nowrap">
+            <span className="sm:hidden">Guided live flow</span>
+            <span className="hidden sm:inline">Connect wallet → discover token → bounded swap → wrap confidentially</span>
+          </Badge>
           <div className="space-y-5">
             <h1 className="max-w-4xl text-balance text-5xl font-semibold tracking-tight text-white md:text-6xl">
               Let the agent find the trade. Keep the authority bounded.

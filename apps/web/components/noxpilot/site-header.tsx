@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { CircleAlert, Menu, Shield, Sparkles, X } from "lucide-react";
+import { CircleAlert, Menu, Sparkles, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -25,13 +26,26 @@ export function SiteHeader() {
     <header className="sticky top-0 z-40 border-b border-white/8 bg-slate-950/70 backdrop-blur-xl">
       <div className="container flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10">
-              <Shield className="h-5 w-5 text-cyan-200" />
+          <Link href="/" className="group flex min-w-0 items-center gap-3">
+            <div className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-cyan-400/18 bg-[radial-gradient(circle_at_35%_25%,rgba(34,211,238,0.22),transparent_48%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(9,14,25,0.92))] shadow-[0_10px_28px_rgba(6,182,212,0.12)] transition group-hover:border-cyan-300/28">
+              <div className="absolute inset-[3px] rounded-full border border-white/6 bg-slate-950/90" />
+              <div className="relative flex h-[34px] w-[34px] items-center justify-center overflow-hidden rounded-full">
+                <Image
+                  src="/brand/logo-symbol-transparent.png"
+                  alt=""
+                  aria-hidden="true"
+                  width={180}
+                  height={180}
+                  className="h-10 w-10 max-w-none translate-y-px object-contain"
+                  sizes="40px"
+                  priority
+                  unoptimized
+                />
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold tracking-[0.24em] text-cyan-200/80">NOXPILOT</p>
-              <p className="text-xs text-slate-400">Bounded confidential execution</p>
+            <div className="min-w-0">
+              <p className="text-sm font-semibold tracking-[0.24em] text-cyan-200/80 transition group-hover:text-cyan-100">NOXPILOT</p>
+              <p className="truncate text-xs text-slate-400">Bounded confidential execution</p>
             </div>
           </Link>
           <div className="flex items-center gap-2">

@@ -6,7 +6,17 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "NoxPilot",
-  description: "Confidential bounded crypto execution with isolated capital and revocable AI authority."
+  description: "Confidential bounded crypto execution with isolated capital and revocable AI authority.",
+  icons: {
+    icon: [
+      { url: "/brand/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/brand/favicon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/brand/favicon-48.png", sizes: "48x48", type: "image/png" },
+      { url: "/brand/favicon-64.png", sizes: "64x64", type: "image/png" }
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+    shortcut: ["/favicon.png"]
+  }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
