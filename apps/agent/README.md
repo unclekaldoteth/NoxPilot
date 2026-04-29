@@ -291,7 +291,14 @@ python -m uvicorn main:app --reload
 The repo includes two deploy paths:
 
 - `apps/agent/Dockerfile` for any container host.
+- `apps/agent/railway.json` for Railway config-as-code.
 - `render.yaml` from the repo root for Render Blueprint deployment.
+
+For Railway, create a service with `Root Directory=apps/agent`. If Railway does not auto-detect the config file, set the custom config path to `/apps/agent/railway.json`. The config forces the Python service to start with:
+
+```bash
+uvicorn main:app --host 0.0.0.0 --port $PORT
+```
 
 Required production env:
 
