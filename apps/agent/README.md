@@ -297,8 +297,10 @@ The repo includes two deploy paths:
 For Railway, create a service with `Root Directory=apps/agent`. If Railway does not auto-detect the config file, set the custom config path to `/apps/agent/railway.json`. The config forces the Python service to start with:
 
 ```bash
-uvicorn main:app --host 0.0.0.0 --port $PORT
+python start.py
 ```
+
+`start.py` reads Railway's `PORT` variable and starts Uvicorn on `0.0.0.0:$PORT`.
 
 Required production env:
 

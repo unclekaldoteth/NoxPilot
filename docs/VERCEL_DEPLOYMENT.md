@@ -100,7 +100,7 @@ Railway path:
 1. Create a Railway service from the GitHub repo.
 2. Set `Root Directory` to `apps/agent`.
 3. If Railway does not show config-as-code from `apps/agent/railway.json`, set the custom config path to `/apps/agent/railway.json`.
-4. Keep the start command empty in the dashboard or set it to `uvicorn main:app --host 0.0.0.0 --port $PORT`; the config file is the source of truth.
+4. Keep the start command empty in the dashboard or set it to `python start.py`; the config file is the source of truth.
 5. Set `CHAINGPT_API_KEY` and `AGENT_ALLOWED_ORIGINS`.
 6. Generate a Railway domain and verify `/health`.
 
