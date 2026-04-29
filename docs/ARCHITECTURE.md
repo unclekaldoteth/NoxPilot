@@ -16,10 +16,11 @@ The operator UX now mirrors that path explicitly:
 - `/` frames the full 3-minute story: connect wallet, discover token, bounded swap, wrap confidentially
 - `/dashboard` is a read-only monitoring surface with a shared `Next action` banner that routes operators back into the guided demo
 - `/demo` is a progressive three-phase flow: `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
+- readiness includes the web contract config, FastAPI `/health`, ChainGPT configuration, Nox config, wrappers, and session-asset balances
 
 ## Current Live Deployment
 
-Arbitrum Sepolia snapshot updated April 17, 2026:
+Arbitrum Sepolia snapshot updated April 29, 2026:
 
 - `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
 - `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
@@ -57,6 +58,9 @@ Connected wallet
   -> register supported ERC-20 wrapper config
 
 Web app
+  -> /api/research/health
+  -> FastAPI /health
+  -> agent + ChainGPT readiness state
   -> /api/research/discover
   -> DexScreener / discovery provider
   -> /api/research/rank
@@ -90,6 +94,7 @@ Dashboard / timeline
   -> compute shared next-action state for dashboard and demo
   -> keep dashboard read-only and move live actions into the guided demo surface
   -> append only real actions and real agent responses
+  -> persist current demo run state in localStorage for refresh-safe judging
 ```
 
 ## UX Flow Model
@@ -100,6 +105,7 @@ The frontend now uses a shared operator-flow model rather than exposing every co
 - the guided demo reveals only the current actionable step and collapses future work until prerequisites are met
 - the dashboard keeps the same live state cards but no longer presents itself as an action surface
 - mobile uses a compact progress view with a `See all steps` toggle instead of a long always-open checklist
+- system health shows plain-language fixes for wallet, network, contracts, topology, Nox config, agent reachability, ChainGPT, and paused trading
 
 This matters architecturally because the UI now reflects the real execution boundary more honestly: monitoring lives on the dashboard, live writes live in the guided demo, and both surfaces derive their guidance from the same app state.
 
@@ -138,11 +144,13 @@ This matters architecturally because the UI now reflects the real execution boun
 The default path no longer uses synthetic market signals.
 
 - discovery can search by category and chain, such as meme tokens on Base, BNB, or Solana
+- the web app can inject an `Executable Arbitrum Lane` candidate set for WETH, ARB, and LINK when the live token and wrapper envs are present
 - discovered Base, BNB, and Solana candidates are research-only unless the full execution and Nox wrapper configuration exists
 - `apps/agent/services/market_data.py` fetches live market rows
 - `apps/agent/services/scoring.py` transforms live price, volume, rank, liquidity, and activity into heuristic signals
 - `/research/rank` returns a ranked shortlist plus a best candidate
 - `/research/explain` explains the live-ranked candidate, using ChainGPT when configured
+- `/health` reports market-data source, discovery source, ChainGPT provider/model, and whether the server-side ChainGPT key is configured without exposing the key
 
 The heuristics are lightweight. The inputs are live.
 
@@ -173,6 +181,7 @@ The confidential asset path begins after the public swap. The wrapper deposit is
 - mock mode only appears when `NEXT_PUBLIC_ENABLE_DEV_MOCKS=true`
 - research API routes call the live agent first and only use mock payloads in explicit dev mode
 - recommendations are executable only when chain, token, DEX route, `ExecutionGuard`, and wrapper config are all present and allowlisted
+- `pnpm validate` and GitHub Actions run web typecheck/build, agent compile/unit tests, Foundry tests, and a basic secret scan
 
 ## What Remains Intentionally Scoped
 
@@ -184,6 +193,7 @@ The confidential asset path begins after the public swap. The wrapper deposit is
 - Solana remains research-only unless a separate Solana wallet, program, routing, and confidential execution path is built
 - the first acquired amount may be observable from public swap and wrapper transactions
 - wallet balances are real; session budgets remain live USD-denominated control values alongside the session-asset accounting
+- funding decisions now use the configured USDC session-asset balance, while native ETH remains visible as gas capacity
 
 That is smaller than a full trading stack, but it is real and aligned with the product boundary.
 
@@ -199,6 +209,8 @@ That is smaller than a full trading stack, but it is real and aligned with the p
 - today, that means WETH, ARB, or LINK on the live deployment
 - public Nox application-contract config
 - running FastAPI agent
+- configured `NEXT_PUBLIC_AGENT_BASE_URL` or server-side `AGENT_BASE_URL`
+- configured `CHAINGPT_API_KEY` when the demo should show ChainGPT active instead of local fallback
 - live market-data reachability
 
 ### Proof That The Flow Is Not Mocked
@@ -217,6 +229,7 @@ That is smaller than a full trading stack, but it is real and aligned with the p
 - [ ] Policy save uses a live Nox client and live contract write.
 - [ ] Policy save uses the proof-backed `PolicyVault.updatePolicyWithNox()` path.
 - [ ] Research ranking comes from FastAPI, not `mock-agent.ts`.
+- [ ] System health shows FastAPI reachable and ChainGPT configured.
 - [ ] Market signals originate from live market-data providers.
 - [ ] Executable status requires supported chain, route, token, guard, and wrapper config.
 - [ ] Session funding, swap execution, wrapping, and settlement each produce real transaction hashes.

@@ -7,10 +7,14 @@
     "dev:web": "pnpm --filter @noxpilot/web dev",
     "build:web": "pnpm --filter @noxpilot/web build",
     "lint:web": "pnpm --filter @noxpilot/web lint",
+    "typecheck:web": "pnpm --filter @noxpilot/web typecheck",
     "build:nox-sdk": "pnpm --filter @noxpilot/nox-sdk run build",
     "typecheck:nox-sdk": "pnpm --filter @noxpilot/nox-sdk run typecheck",
     "dev:agent": "cd apps/agent && ./.venv/bin/python -m uvicorn main:app --reload --port 8010",
-    "contracts:build": "cd contracts && forge build"
+    "validate:agent": "cd apps/agent && PYTHON_BIN=python3; if [ -x .venv/bin/python ]; then PYTHON_BIN=.venv/bin/python; fi; $PYTHON_BIN -m compileall -q -x '.*\\.venv.*' . && $PYTHON_BIN -m unittest discover -s tests",
+    "contracts:build": "cd contracts && forge build",
+    "contracts:test": "cd contracts && forge test",
+    "validate": "pnpm typecheck:nox-sdk && pnpm typecheck:web && pnpm build:web && pnpm validate:agent && pnpm contracts:test"
   },
   "devDependencies": {
     "@iexec-nox/nox-confidential-contracts": "0.1.0",

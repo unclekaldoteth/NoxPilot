@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Search, ShieldCheck } from "lucide-react";
-import type { TokenDiscoveryCategory, TokenDiscoveryChain } from "@noxpilot/shared";
+import type {
+  TokenDiscoveryCandidate,
+  TokenDiscoveryCategory,
+  TokenDiscoveryChain,
+  TokenDiscoveryResponse
+} from "@noxpilot/shared";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { fetchTokenDiscovery } from "@/lib/research";
+import { getConfiguredDemoTokens } from "@/lib/dex";
+import { getConfidentialWrapperSupport } from "@/lib/confidential-assets";
 import { formatPct, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { SurfaceCard } from "@noxpilot/ui";
@@ -33,6 +40,60 @@ function statusVariant(status: string) {
 
 function statusLabel(status: string) {
   return status.replaceAll("_", " ");
+}
+
+function buildExecutableLaneResponse(category: TokenDiscoveryCategory): TokenDiscoveryResponse {
+  const marketHints: Record<string, { priceChange: number; volume: number; liquidity: number; txns: number }> = {
+    ETH: { priceChange: 1.4, volume: 8_500_000, liquidity: 3_200_000, txns: 1850 },
+    ARB: { priceChange: 7.8, volume: 2_400_000, liquidity: 980_000, txns: 1260 },
+    LINK: { priceChange: 4.1, volume: 3_100_000, liquidity: 1_250_000, txns: 1120 }
+  };
+  const candidates = getConfiguredDemoTokens()
+    .filter((token) => token.symbol !== "USDC")
+    .map((token): TokenDiscoveryCandidate => {
+      const support = getConfidentialWrapperSupport(token.symbol);
+      const hint = marketHints[token.symbol] ?? {
+        priceChange: 2.5,
+        volume: 1_000_000,
+        liquidity: 500_000,
+        txns: 800
+      };
+
+      return {
+        symbol: token.symbol,
+        name: `${token.symbol} executable lane`,
+        chain_id: "421614",
+        chain_label: "Arbitrum Sepolia",
+        chain_type: "evm",
+        token_address: token.address,
+        pair_address: null,
+        dex_id: "uniswap-v3",
+        dex_url: null,
+        category,
+        price_usd: null,
+        price_change_pct_24h: hint.priceChange,
+        volume_24h_usd: hint.volume,
+        liquidity_usd: hint.liquidity,
+        market_cap_usd: null,
+        fdv_usd: null,
+        pair_created_at: null,
+        quote_token_symbol: "USDC",
+        txns_24h: hint.txns,
+        execution_status: support.supported ? "executable" : "needs_allowlist",
+        execution_note: support.supported
+          ? "Executable now: token, route, ExecutionGuard allowlist, and confidential wrapper are configured on Arbitrum Sepolia."
+          : support.reason ?? "Token needs complete route, allowlist, and wrapper config before execution.",
+        risk_flags: support.supported ? [] : ["missing wrapper"]
+      };
+    });
+
+  return {
+    generatedAt: new Date().toISOString(),
+    source: "NoxPilot executable Arbitrum lane",
+    category,
+    chains: ["arbitrum-sepolia"],
+    candidates
+  };
 }
 
 export function TokenDiscoveryCard({ interactive = false }: { interactive?: boolean }) {
@@ -70,6 +131,11 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
     });
   }
 
+  function handleUseExecutableLane() {
+    setError(null);
+    setTokenDiscoveryResult(buildExecutableLaneResponse(category), "agent");
+  }
+
   return (
     <SurfaceCard className="space-y-5">
       <div className="flex items-start justify-between gap-4">
@@ -80,7 +146,7 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
           <div>
             <h3 className="text-lg font-semibold text-white">Discover Tokens</h3>
             <p className="text-sm leading-6 text-slate-300">
-              Search category-based tokens across Base, BNB, and Solana before running NoxPilot research.
+              Search category-based tokens across Base, BNB, and Solana, or use the executable Arbitrum lane for live swap-ready candidates.
             </p>
           </div>
         </div>
@@ -139,9 +205,17 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
             </div>
           </div>
 
-          <Button type="button" onClick={handleDiscoverTokens} disabled={isPending || chains.length === 0}>
-            {isPending ? "Discovering Tokens..." : "Discover Tokens"}
-          </Button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button type="button" onClick={handleUseExecutableLane} variant="secondary">
+              Use Executable Arbitrum Lane
+            </Button>
+            <Button type="button" onClick={handleDiscoverTokens} disabled={isPending || chains.length === 0}>
+              {isPending ? "Discovering Tokens..." : "Discover Research-Only Tokens"}
+            </Button>
+          </div>
+          <p className="text-xs leading-5 text-slate-500">
+            Arbitrum lane is the safe v1 execution path. Base, BNB, and Solana discovery expands research only until separate deployments and wrappers exist.
+          </p>
         </div>
       ) : null}
 

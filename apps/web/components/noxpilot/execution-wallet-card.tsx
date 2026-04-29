@@ -73,13 +73,22 @@ export function ExecutionWalletCard() {
           ))}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-4">
           <div className="glass-outline rounded-3xl p-4">
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Balance</p>
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Gas balance</p>
             <p className="mt-2 text-2xl font-semibold text-white">{formatEth(executionWallet.nativeBalanceEth)}</p>
             <p className="mt-1 text-xs text-slate-500">
               {executionWallet.nativeBalanceUsd === null ? "USD estimate unavailable" : formatUsd(executionWallet.nativeBalanceUsd)}
             </p>
+          </div>
+          <div className="glass-outline rounded-3xl p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Session asset</p>
+            <p className="mt-2 text-2xl font-semibold text-white">
+              {executionWallet.sessionAssetBalance === null
+                ? "n/a"
+                : executionWallet.sessionAssetBalance.toFixed(2)}
+            </p>
+            <p className="mt-1 text-xs text-slate-500">{executionWallet.sessionAssetSymbol}</p>
           </div>
           <div className="glass-outline rounded-3xl p-4">
             <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Session budget</p>

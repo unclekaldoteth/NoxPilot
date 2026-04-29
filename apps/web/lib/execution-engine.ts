@@ -36,9 +36,11 @@ export function evaluateExecution(input: EvaluationInput): ExecutionDecision {
 
   const reasons: string[] = [];
   const walletUsdEstimate = input.vault.nativeBalanceUsd;
+  const sessionAssetCapacityUsd = input.executionWallet.sessionAssetBalance;
+  const availableSessionAssetUsd = sessionAssetCapacityUsd ?? 0;
   const estimatedSpendUsd = Math.min(
     input.policy.dailyBudgetUsd,
-    input.executionWallet.sessionActive ? input.executionWallet.remainingBudgetUsd : walletUsdEstimate ?? 0
+    input.executionWallet.sessionActive ? input.executionWallet.remainingBudgetUsd : availableSessionAssetUsd
   );
 
   if (input.paused) {
@@ -78,10 +80,15 @@ export function evaluateExecution(input: EvaluationInput): ExecutionDecision {
       `The current live MVP only records bounded execution through ${DEFAULT_PROTOCOL}. Update the allowed protocol to continue.`
     );
   }
-  if (walletUsdEstimate === null) {
-    reasons.push("Vault wallet USD capacity is unavailable because the live ETH/USD market snapshot has not been fetched.");
-  } else if (walletUsdEstimate <= 0) {
-    reasons.push("Vault wallet has no live USD-equivalent capacity for a bounded session.");
+  if (!input.executionWallet.sessionActive && sessionAssetCapacityUsd === null) {
+    reasons.push("Owner wallet session asset balance is unavailable. Refresh live setup before opening the session.");
+  } else if (!input.executionWallet.sessionActive && availableSessionAssetUsd <= 0) {
+    reasons.push(
+      `Owner wallet has no ${input.executionWallet.sessionAssetSymbol ?? "USDC"} available for the bounded session.`
+    );
+  }
+  if (walletUsdEstimate !== null && walletUsdEstimate <= 0) {
+    reasons.push("Owner wallet has no native gas balance for live transactions.");
   }
 
   const allowed = reasons.length === 0;

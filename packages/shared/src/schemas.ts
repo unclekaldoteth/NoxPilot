@@ -20,6 +20,9 @@ export const ExecutionWalletStateSchema = z.object({
   walletAddress: z.string(),
   nativeBalanceEth: z.number().nullable(),
   nativeBalanceUsd: z.number().nullable(),
+  sessionAssetSymbol: z.string().default("USDC"),
+  sessionAssetBalance: z.number().nullable().default(null),
+  sessionAssetAllowance: z.number().nullable().default(null),
   dailyBudgetUsd: z.number(),
   remainingBudgetUsd: z.number(),
   sessionActive: z.boolean(),
@@ -113,7 +116,7 @@ export type EncryptedPolicyPayload = z.infer<typeof EncryptedPolicyPayloadSchema
 export const TokenDiscoveryCategorySchema = z.enum(["meme", "defi", "ai", "gaming", "rwa", "trending"]);
 export type TokenDiscoveryCategory = z.infer<typeof TokenDiscoveryCategorySchema>;
 
-export const TokenDiscoveryChainSchema = z.enum(["base", "bsc", "solana"]);
+export const TokenDiscoveryChainSchema = z.enum(["arbitrum-sepolia", "base", "bsc", "solana"]);
 export type TokenDiscoveryChain = z.infer<typeof TokenDiscoveryChainSchema>;
 
 export const TokenExecutionStatusSchema = z.enum(["executable", "needs_allowlist", "research_only", "unsupported_chain"]);
@@ -233,6 +236,22 @@ export const ResearchMockMarketResponseSchema = z.object({
   signals: z.array(TokenSignalsSchema)
 });
 export type ResearchMockMarketResponse = z.infer<typeof ResearchMockMarketResponseSchema>;
+
+export const AgentHealthResponseSchema = z.object({
+  service: z.string(),
+  status: z.literal("ok"),
+  mode: z.string(),
+  timestamp: z.string(),
+  market_data_source: z.string(),
+  discovery_source: z.string(),
+  chain_gpt: z.object({
+    configured: z.boolean(),
+    provider: z.string(),
+    model: z.string().nullable(),
+    base_url: z.string()
+  })
+});
+export type AgentHealthResponse = z.infer<typeof AgentHealthResponseSchema>;
 
 export const TokenDiscoveryRequestSchema = z.object({
   category: TokenDiscoveryCategorySchema.default("meme"),

@@ -15,6 +15,7 @@ DEXSCREENER_TIMEOUT_SECONDS = float(os.getenv("DEXSCREENER_TIMEOUT_SECONDS", "10
 DISCOVERY_SOURCE = "DexScreener search"
 
 CHAIN_METADATA: dict[str, dict[str, str]] = {
+    "arbitrum-sepolia": {"label": "Arbitrum Sepolia", "type": "evm"},
     "base": {"label": "Base", "type": "evm"},
     "bsc": {"label": "BNB Chain", "type": "evm"},
     "solana": {"label": "Solana", "type": "solana"},
@@ -161,6 +162,8 @@ async def discover_tokens(
 
     async with httpx.AsyncClient(timeout=DEXSCREENER_TIMEOUT_SECONDS) as client:
         for chain in chains:
+            if chain == "arbitrum-sepolia":
+                continue
             for query in queries:
                 response = await client.get(
                     f"{DEXSCREENER_BASE_URL}/latest/dex/search",

@@ -133,7 +133,7 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
               </Badge>
             ) : null}
             {researchExplanation?.provider ? (
-              <Badge variant={researchExplanation.provider.includes("ChainGPT") ? "success" : "muted"}>
+              <Badge variant={researchExplanation.provider.includes("ChainGPT") ? "success" : "warning"}>
                 {researchExplanation.provider}
                 {researchExplanation.model ? ` · ${researchExplanation.model}` : ""}
               </Badge>
@@ -217,6 +217,11 @@ export function ResearchRecommendationCard({ interactive = false }: { interactiv
             ) : null}
             {researchExplanation?.operator_note ? (
               <p className="text-xs leading-5 text-slate-500 border-t border-white/5 pt-3">{researchExplanation.operator_note}</p>
+            ) : null}
+            {researchExplanation?.provider && !researchExplanation.provider.includes("ChainGPT") ? (
+              <p className="rounded-2xl border border-amber-400/15 bg-amber-400/[0.04] p-3 text-xs leading-5 text-amber-100">
+                ChainGPT is not active for this explanation. Set `CHAINGPT_API_KEY` on the FastAPI deployment for the sponsor-integrated analyst layer.
+              </p>
             ) : null}
           </div>
 

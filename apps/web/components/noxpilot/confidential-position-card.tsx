@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, Loader2, LockKeyhole, RefreshCcw, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, Eye, Loader2, LockKeyhole, RefreshCcw, ShieldCheck } from "lucide-react";
 import { MetricPill, SurfaceCard } from "@noxpilot/ui";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,14 @@ function formatAddress(address: string | null) {
     return "n/a";
   }
   return `${address.slice(0, 8)}…${address.slice(-4)}`;
+}
+
+function explorerTxUrl(txHash: string | null) {
+  return txHash ? `https://sepolia.arbiscan.io/tx/${txHash}` : null;
+}
+
+function explorerAddressUrl(address: string | null) {
+  return address ? `https://sepolia.arbiscan.io/address/${address}` : null;
 }
 
 export function ConfidentialPositionCard({ interactive = false }: { interactive?: boolean }) {
@@ -103,6 +111,60 @@ export function ConfidentialPositionCard({ interactive = false }: { interactive?
             </div>
           </div>
 
+          <div className="rounded-3xl border border-cyan-400/15 bg-cyan-400/[0.04] p-4">
+            <p className="text-xs uppercase tracking-[0.2em] text-cyan-100/80">Confidential asset proof</p>
+            <div className="mt-3 grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+              <div>
+                <span className="block text-xs uppercase tracking-[0.18em] text-slate-500">Wrapper contract</span>
+                {explorerAddressUrl(confidentialPosition.wrapperAddress) ? (
+                  <a
+                    href={explorerAddressUrl(confidentialPosition.wrapperAddress) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 font-mono text-cyan-100 transition hover:text-cyan-50"
+                  >
+                    {formatAddress(confidentialPosition.wrapperAddress)}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <span className="mt-1 block text-slate-500">missing wrapper config</span>
+                )}
+              </div>
+              <div>
+                <span className="block text-xs uppercase tracking-[0.18em] text-slate-500">Wrap transaction</span>
+                {explorerTxUrl(confidentialPosition.wrapTxHash) ? (
+                  <a
+                    href={explorerTxUrl(confidentialPosition.wrapTxHash) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 inline-flex items-center gap-1 font-mono text-cyan-100 transition hover:text-cyan-50"
+                  >
+                    {formatHandle(confidentialPosition.wrapTxHash)}
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                  </a>
+                ) : (
+                  <span className="mt-1 block text-slate-500">not wrapped yet</span>
+                )}
+              </div>
+              <div>
+                <span className="block text-xs uppercase tracking-[0.18em] text-slate-500">ACL state</span>
+                <span className="mt-1 block">
+                  {confidentialPosition.viewerAclState
+                    ? confidentialPosition.viewerAclState.canDecrypt
+                      ? "owner reveal permitted"
+                      : "owner reveal blocked"
+                    : "unchecked until reveal"}
+                </span>
+              </div>
+              <div>
+                <span className="block text-xs uppercase tracking-[0.18em] text-slate-500">Privacy boundary</span>
+                <span className="mt-1 block">
+                  Swap and deposit are public; post-wrap balance handle and reveal authorization are confidential.
+                </span>
+              </div>
+            </div>
+          </div>
+
           {confidentialPosition.decryptedBalance ? (
             <div className="rounded-3xl border border-emerald-400/15 bg-emerald-400/[0.04] p-4">
               <p className="text-xs uppercase tracking-[0.2em] text-emerald-200/80">Revealed balance</p>
@@ -123,9 +185,19 @@ export function ConfidentialPositionCard({ interactive = false }: { interactive?
             </div>
           ) : null}
 
-          {confidentialPosition.wrapTxHash ? (
+          {confidentialPosition.unwrapTxHash || confidentialPosition.finalizeUnwrapTxHash ? (
             <div className="glass-outline rounded-3xl p-4 text-sm text-slate-300">
-              Wrap tx: <span className="font-mono text-cyan-100">{formatHandle(confidentialPosition.wrapTxHash)}</span>
+              Unwrap tx:{" "}
+              <span className="font-mono text-cyan-100">{formatHandle(confidentialPosition.unwrapTxHash)}</span>
+              {confidentialPosition.finalizeUnwrapTxHash ? (
+                <>
+                  {" "}
+                  · finalize:{" "}
+                  <span className="font-mono text-cyan-100">
+                    {formatHandle(confidentialPosition.finalizeUnwrapTxHash)}
+                  </span>
+                </>
+              ) : null}
             </div>
           ) : null}
         </div>

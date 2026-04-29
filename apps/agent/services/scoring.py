@@ -87,6 +87,7 @@ def build_discovered_recommendation(
     momentum_signal = _clamp(50.0 + price_change * 1.35)
     sentiment_signal = _clamp(volume_signal * 0.42 + liquidity_signal * 0.35 + tx_signal * 0.23)
     volatility_signal = _clamp(abs(price_change) * 2.3)
+    execution_bonus = 14.0 if candidate.execution_status == "executable" else 0.0
 
     score = (
         momentum_signal * 0.34
@@ -95,6 +96,7 @@ def build_discovered_recommendation(
         - volatility_signal * 0.14
         + BIAS_SCORE_OFFSET.get(portfolio_bias, 0.0)
         - len(candidate.risk_flags) * 1.8
+        + execution_bonus
     )
     confidence = (
         liquidity_signal * 0.34
@@ -102,6 +104,7 @@ def build_discovered_recommendation(
         + tx_signal * 0.18
         + (100 - volatility_signal) * 0.18
         - len(candidate.risk_flags) * 1.4
+        + execution_bonus * 0.6
     )
 
     expected_move_pct = round(max(min(price_change / 8.0, 7.5), -7.5), 2)

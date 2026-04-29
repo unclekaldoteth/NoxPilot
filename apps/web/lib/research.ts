@@ -1,9 +1,11 @@
 import {
   ResearchMockMarketResponseSchema,
+  AgentHealthResponseSchema,
   ResearchExplainResponseSchema,
   ResearchRankResponseSchema,
   TokenDiscoveryResponseSchema,
   type Recommendation,
+  type AgentHealthResponse,
   type ResearchMockMarketResponse,
   type ResearchExplainResponse,
   type ResearchRankResponse,
@@ -133,6 +135,22 @@ export async function fetchMarketSnapshot(whitelist: string[]): Promise<Research
 
   return {
     data: ResearchMockMarketResponseSchema.parse(await response.json()),
+    delivery: extractDelivery(response)
+  };
+}
+
+export async function fetchAgentHealth(): Promise<ResearchFetchResult<AgentHealthResponse>> {
+  const response = await fetch("/api/research/health", {
+    method: "GET",
+    cache: "no-store"
+  });
+
+  if (!response.ok) {
+    throw new Error(await readError(response));
+  }
+
+  return {
+    data: AgentHealthResponseSchema.parse(await response.json()),
     delivery: extractDelivery(response)
   };
 }

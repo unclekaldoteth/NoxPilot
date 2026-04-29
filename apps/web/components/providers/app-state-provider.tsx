@@ -80,6 +80,21 @@ type FundingStage = "idle" | "opening-session" | "approving-asset" | "funding-gu
 type WrapStage = "idle" | "wrapping" | "wrapped";
 type RevealStage = "idle" | "revealing";
 type UnwrapStage = "idle" | "requesting" | "finalizing";
+type PersistedRunState = {
+  version: 1;
+  updatedAt: string;
+  tokenDiscovery: TokenDiscoveryResponse | null;
+  tokenDiscoverySource: ResearchSource;
+  research: ResearchRankResponse | null;
+  researchRankSource: ResearchSource;
+  researchExplanation: ResearchExplainResponse | null;
+  researchExplainSource: ResearchSource;
+  recommendation: Recommendation | null;
+  decision: ExecutionDecision | null;
+  settlement: SettlementResult | null;
+  confidentialPosition: ConfidentialPosition | null;
+  activity: ActivityItem[];
+};
 
 type AppStateContextValue = {
   mode: AppMode;
@@ -144,6 +159,7 @@ type AppStateContextValue = {
 };
 
 const AppStateContext = createContext<AppStateContextValue | null>(null);
+const PERSISTED_RUN_KEY = "noxpilot.operatorRun.v1";
 
 function createEmptyVault(address?: string | null, chainId = SUPPORTED_CHAIN_ID): VaultState {
   return {
@@ -164,6 +180,9 @@ function createEmptyExecutionWallet(address?: string | null): ExecutionWalletSta
     walletAddress: address ?? "Execution wallet unassigned",
     nativeBalanceEth: null,
     nativeBalanceUsd: null,
+    sessionAssetSymbol: "USDC",
+    sessionAssetBalance: null,
+    sessionAssetAllowance: null,
     dailyBudgetUsd: 0,
     remainingBudgetUsd: 0,
     sessionActive: false,
@@ -242,6 +261,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const [confidentialPosition, setConfidentialPosition] = useState<ConfidentialPosition | null>(null);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [persistenceReady, setPersistenceReady] = useState(false);
   const [topologyReady, setTopologyReady] = useState(defaultMode === "mock");
   const [hasUsedSafetyControl, setHasUsedSafetyControl] = useState(false);
   const [isInitializing, setIsInitializing] = useState(false);
@@ -264,6 +284,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
   const publicClient = usePublicClient();
   const hasInitializedEffect = useRef(false);
   const policySaveInFlight = useRef(false);
+  const hasHydratedPersistedRun = useRef(false);
 
   const walletConnected = mode === "mock" ? true : Boolean(isConnected && address);
   const walletSource: WalletSource = mode === "mock" ? "mock" : walletConnected ? "live" : "disconnected";
@@ -625,6 +646,21 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         executionWalletAddress && executionWalletAddress !== "0x0000000000000000000000000000000000000000"
           ? await publicClient.getBalance({ address: executionWalletAddress })
           : 0n;
+      const sessionAsset = getSessionAssetConfig();
+      const [sessionAssetBalanceRaw, sessionAssetAllowanceRaw] = await Promise.all([
+        publicClient.readContract({
+          address: sessionAsset.address,
+          abi: erc20Abi,
+          functionName: "balanceOf",
+          args: [address]
+        }) as Promise<bigint>,
+        publicClient.readContract({
+          address: sessionAsset.address,
+          abi: erc20Abi,
+          functionName: "allowance",
+          args: [address, executionGuardAddress]
+        }) as Promise<bigint>
+      ]);
 
       const ethPriceUsd = await fetchEthPriceUsd();
       const vaultBalanceEth = formatEthBalance(walletBalanceWei);
@@ -632,6 +668,8 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       const executionBalanceEth = formatEthBalance(executionBalanceWei);
       const executionBalanceUsd =
         ethPriceUsd === null ? null : Number((executionBalanceEth * ethPriceUsd).toFixed(2));
+      const sessionAssetBalance = tokenUnitsToNumber(sessionAssetBalanceRaw, sessionAsset.decimals);
+      const sessionAssetAllowance = tokenUnitsToNumber(sessionAssetAllowanceRaw, sessionAsset.decimals);
 
       const policyRefs = toPolicyRefs(policyRefsTuple);
       const session = toSessionSnapshot(sessionTuple);
@@ -659,6 +697,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
             : "Execution wallet unassigned",
         nativeBalanceEth: executionBalanceWei > 0n ? executionBalanceEth : null,
         nativeBalanceUsd: executionBalanceWei > 0n ? executionBalanceUsd : null,
+        sessionAssetSymbol: sessionAsset.symbol,
+        sessionAssetBalance,
+        sessionAssetAllowance,
         dailyBudgetUsd: Number(session.fundedAmountUsd),
         remainingBudgetUsd: Number(remainingBudget),
         sessionActive: session.active,
@@ -761,7 +802,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       if (guardPolicyVault.toLowerCase() !== policyVaultAddress.toLowerCase()) {
         throw new Error("ExecutionGuard is not wired to the configured PolicyVault address.");
       }
-      if (guardSessionAsset.toLowerCase() !== getSessionAssetConfig().address.toLowerCase()) {
+      if (guardSessionAsset.toLowerCase() !== sessionAsset.address.toLowerCase()) {
         throw new Error("ExecutionGuard session asset does not match the configured session asset.");
       }
       if (guardSwapRouter.toLowerCase() !== getDexRouterAddress().toLowerCase()) {
@@ -1406,6 +1447,9 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       setFundingStage("ready");
       setExecutionWallet((current) => ({
         ...current,
+        sessionAssetSymbol: current.sessionAssetSymbol ?? "USDC",
+        sessionAssetBalance: Math.max((current.sessionAssetBalance ?? policy.dailyBudgetUsd) - policy.dailyBudgetUsd, 0),
+        sessionAssetAllowance: current.sessionAssetAllowance ?? policy.dailyBudgetUsd,
         dailyBudgetUsd: policy.dailyBudgetUsd,
         remainingBudgetUsd: policy.dailyBudgetUsd,
         sessionActive: true,
@@ -2112,6 +2156,87 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       throw error;
     }
   }
+
+  useEffect(() => {
+    if (hasHydratedPersistedRun.current || typeof window === "undefined") {
+      return;
+    }
+
+    hasHydratedPersistedRun.current = true;
+    if (mode !== "live") {
+      setPersistenceReady(true);
+      return;
+    }
+
+    try {
+      const raw = window.localStorage.getItem(PERSISTED_RUN_KEY);
+      if (!raw) {
+        setPersistenceReady(true);
+        return;
+      }
+
+      const parsed = JSON.parse(raw) as Partial<PersistedRunState>;
+      if (parsed.version !== 1) {
+        window.localStorage.removeItem(PERSISTED_RUN_KEY);
+        setPersistenceReady(true);
+        return;
+      }
+
+      setTokenDiscovery(parsed.tokenDiscovery ?? null);
+      setTokenDiscoverySource(parsed.tokenDiscoverySource ?? null);
+      setResearch(parsed.research ?? null);
+      setResearchRankSource(parsed.researchRankSource ?? null);
+      setResearchExplanationState(parsed.researchExplanation ?? null);
+      setResearchExplainSource(parsed.researchExplainSource ?? null);
+      setRecommendation(parsed.recommendation ?? parsed.research?.bestCandidate ?? null);
+      setDecision(parsed.decision ?? null);
+      setSettlement(parsed.settlement ?? null);
+      setConfidentialPosition(parsed.confidentialPosition ?? null);
+      setActivity((parsed.activity ?? []).slice(0, 20));
+    } catch {
+      window.localStorage.removeItem(PERSISTED_RUN_KEY);
+    } finally {
+      setPersistenceReady(true);
+    }
+  }, [mode]);
+
+  useEffect(() => {
+    if (!persistenceReady || mode !== "live" || typeof window === "undefined") {
+      return;
+    }
+
+    const payload: PersistedRunState = {
+      version: 1,
+      updatedAt: new Date().toISOString(),
+      tokenDiscovery,
+      tokenDiscoverySource,
+      research,
+      researchRankSource,
+      researchExplanation,
+      researchExplainSource,
+      recommendation,
+      decision,
+      settlement,
+      confidentialPosition,
+      activity
+    };
+
+    window.localStorage.setItem(PERSISTED_RUN_KEY, JSON.stringify(payload));
+  }, [
+    persistenceReady,
+    mode,
+    tokenDiscovery,
+    tokenDiscoverySource,
+    research,
+    researchRankSource,
+    researchExplanation,
+    researchExplainSource,
+    recommendation,
+    decision,
+    settlement,
+    confidentialPosition,
+    activity
+  ]);
 
   useEffect(() => {
     if (mode !== "live") {

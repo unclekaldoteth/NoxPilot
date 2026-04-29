@@ -47,6 +47,8 @@ Required/optional environment:
 
 If ChainGPT is not configured, unreachable, or out of credits, the endpoint falls back to the local deterministic explainer so the demo flow does not break.
 
+`GET /health` reports whether ChainGPT is configured without exposing `CHAINGPT_API_KEY`. The web readiness banner uses this to show `ChainGPT analyst active` only when the server-side key is present.
+
 Required/optional environment:
 
 - `CHAINGPT_API_KEY`: server-side ChainGPT API key. Never expose this to the browser.
@@ -64,6 +66,27 @@ Required/optional environment:
 - `POST /research/mock-market`
 
 `/research/mock-market` keeps its legacy name for compatibility, but in the live default path it returns fetched live market snapshots rather than synthetic data.
+
+### `GET /health`
+
+Response shape:
+
+```json
+{
+  "service": "noxpilot-research-agent",
+  "status": "ok",
+  "mode": "live",
+  "timestamp": "2026-04-29T09:15:00.000Z",
+  "market_data_source": "CoinGecko markets",
+  "discovery_source": "DexScreener search",
+  "chain_gpt": {
+    "configured": true,
+    "provider": "ChainGPT Web3 LLM",
+    "model": "general_assistant",
+    "base_url": "https://api.chaingpt.org"
+  }
+}
+```
 
 ## Example Payloads
 
@@ -263,6 +286,28 @@ cd apps/agent
 python -m uvicorn main:app --reload
 ```
 
+## Deploy
+
+The repo includes two deploy paths:
+
+- `apps/agent/Dockerfile` for any container host.
+- `render.yaml` from the repo root for Render Blueprint deployment.
+
+Required production env:
+
+- `AGENT_ALLOWED_ORIGINS=https://your-web-domain`
+- `CHAINGPT_API_KEY=<server-side ChainGPT key>`
+- `CHAINGPT_BASE_URL=https://api.chaingpt.org`
+- `CHAINGPT_MODEL=general_assistant`
+
+After deploy, verify:
+
+```bash
+curl -s https://your-agent-url/health
+```
+
+Then set the web app `AGENT_BASE_URL` and `NEXT_PUBLIC_AGENT_BASE_URL` to the same deployed base URL.
+
 ## Env
 
 ```bash
@@ -284,7 +329,7 @@ Key values:
 ## Validation
 
 ```bash
-python3 -m py_compile main.py schemas.py services/*.py
+pnpm validate:agent
 curl -s http://127.0.0.1:8010/health
 curl -s http://127.0.0.1:8010/research/discover -H 'content-type: application/json' -d '{"category":"meme","chains":["base","bsc","solana"],"limit":6,"min_liquidity_usd":10000,"min_volume_24h_usd":1000,"risk_mode":"balanced"}'
 curl -s http://127.0.0.1:8010/research/rank -H 'content-type: application/json' -d '{"whitelist":["ETH","ARB","USDC","LINK"],"portfolio_bias":"neutral"}'

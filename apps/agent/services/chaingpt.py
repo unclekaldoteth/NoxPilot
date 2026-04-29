@@ -23,6 +23,15 @@ def chaingpt_configured() -> bool:
     return bool(os.getenv("CHAINGPT_API_KEY", "").strip())
 
 
+def chaingpt_health() -> dict[str, str | bool | None]:
+    return {
+        "configured": chaingpt_configured(),
+        "provider": CHAINGPT_PROVIDER_LABEL,
+        "model": CHAINGPT_MODEL or None,
+        "base_url": CHAINGPT_BASE_URL,
+    }
+
+
 def _trim(value: str, limit: int = 520) -> str:
     normalized = " ".join(value.strip().split())
     if len(normalized) <= limit:

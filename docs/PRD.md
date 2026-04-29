@@ -43,8 +43,10 @@ In scope:
 
 - vault and execution wallet model
 - confidential policy setup and encrypted handle summary
-- category and chain-based token discovery for richer research inputs
+- executable Arbitrum Sepolia lane for WETH, ARB, and LINK
+- category and chain-based token discovery for richer research-only inputs
 - research agent that ranks token opportunities
+- ChainGPT analyst explanation with honest local fallback labeling
 - execution decision engine in TypeScript
 - one bounded live exact-input swap per session on Arbitrum Sepolia
 - post-buy confidential wrapping of the acquired ERC-20 position on Arbitrum Sepolia
@@ -52,6 +54,7 @@ In scope:
 - activity log, trust page, and polished dashboard UX
 - Solidity skeletons for policy, execution guard, and confidential wrapper integration with one real guarded swap path
 - live judged flow with explicit dev-only mock fallback
+- agent/ChainGPT readiness checks, local demo state persistence, validation scripts, and CI safety checks
 
 Out of scope:
 
@@ -76,6 +79,7 @@ The boundary is strict:
 
 - the frontend calls internal Next.js routes or the FastAPI service for research output
 - FastAPI returns discovery, ranking, and explanation payloads only
+- FastAPI exposes `/health` with market-data, discovery, and ChainGPT configuration status
 - TypeScript evaluates confidential policy thresholds and decides whether execution is allowed
 - wallet logic, Nox handle logic, wrapping orchestration, and reveal UX stay on the TypeScript side
 - `ExecutionGuard` remains responsible for bounded swaps and session enforcement
@@ -97,6 +101,8 @@ This keeps main capital isolated from operational execution while allowing the r
 - `Agent B`: TypeScript execution layer that checks the recommendation against confidential policy thresholds, wrapper availability, and operational constraints.
 
 Agent B is the authority boundary. Research does not directly trigger spending, and wrapping only happens after the TypeScript layer confirms that the token, chain, DEX route, `ExecutionGuard`, and wrapper configuration are all supported and allowlisted.
+
+The v1 discovery UX separates two paths: `Executable Arbitrum Lane` for WETH, ARB, and LINK candidates that can proceed through live execution and wrapping, and Base/BNB/Solana category discovery for research-only expansion.
 
 ## 8. Nox Integration Role
 
@@ -166,10 +172,15 @@ Privacy boundary:
 - guided three-phase demo for the live judged flow with progressive disclosure instead of a fully expanded checklist
 - shared `Next action` banner across `/dashboard` and `/demo`
 - readiness banner that explains blocking issues in plain language
-- category and chain token discovery before live research scoring
-- ChainGPT-assisted explanation for top research candidates when configured
+- readiness banner that checks wallet, network, contracts, Nox config, FastAPI reachability, ChainGPT configuration, and trading state
+- executable Arbitrum lane before live research scoring
+- category and chain token discovery for Base, BNB, and Solana research expansion
+- ChainGPT-assisted explanation for top research candidates when configured, with visible local fallback warning when not configured
 - post-buy confidential wrapping for supported Arbitrum Sepolia ERC-20 outputs
+- confidential proof panel with wrapper address, handle state, ACL state, privacy boundary, and explorer links
 - owner-only confidential balance reveal state
+- local persistence for research, decision, confidential position, settlement, and timeline state during the demo run
+- `pnpm validate` and GitHub Actions validation for web, agent, contracts, and basic secret scanning
 - trust page comparing unsafe autonomy vs bounded confidential execution
 - explicit dev-only mock fallback
 - shared schemas for policies, recommendations, confidential positions, decisions, and activity logs
@@ -187,7 +198,7 @@ Privacy boundary:
 3. Enter policy values.
 4. Encrypt relevant policy thresholds with the Nox wrapper.
 5. Save policy on-chain and display public-safe metadata.
-6. Discover token candidates by category and chain.
+6. Choose the executable Arbitrum lane or discover research-only Base/BNB/Solana candidates by category and chain.
 7. Trigger the live research agent to score the vetted candidate set.
 8. Review ranked recommendation and explanation.
 9. Run TypeScript execution decisioning.
@@ -218,16 +229,21 @@ Privacy boundary:
 - the demo is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
 - the demo shows only the current actionable step expanded while future steps remain collapsed until unlocked
 - the app shows a shared `Next action` banner on `/dashboard` and `/demo`
+- the system health banner reports FastAPI reachability and ChainGPT configuration
 - the policy form supports all required fields
 - confidential values can be encrypted through the live Nox wrapper path
 - the FastAPI agent exposes health, rank, explain, market, and discovery-backed research endpoints
 - the judged path uses live market-data inputs for ranking and explanation
+- the executable Arbitrum lane only marks candidates executable when token, route, guard, allowlist, and wrapper config exist
 - the execution layer checks score threshold, trade limit, budget, token whitelist, wrapper availability, and session status
 - the live execution path performs a real guarded exact-input swap instead of a synthetic success state
 - after a guarded buy, the app records a confidential position handle for the wrapped output
 - the owner can reveal the decrypted confidential balance through the Nox handle client when ACL permits
+- the app exposes wrapper address, wrap tx hash, encrypted handles, ACL state, and privacy boundary after wrapping
 - the app blocks honestly when Nox config, wrapper config, route config, or allowlist state is missing
 - Base, BNB, and Solana recommendations are clearly marked research-only or future-scoped for v1 confidential execution
+- ChainGPT fallback is visible and not presented as sponsor-backed output when `CHAINGPT_API_KEY` is missing
+- `pnpm validate` covers web typecheck/build, FastAPI compile/unit tests, and Foundry tests
 - the default demo path is live
 - the contracts compile as bounded-execution and confidential-wrapper skeletons
 

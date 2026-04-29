@@ -62,7 +62,15 @@ export function FundingCard({ interactive = false }: { interactive?: boolean }) 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="glass-outline rounded-3xl p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Required funding</p>
-          <p className="mt-2 text-2xl font-semibold text-white">{formatUsd(decision?.requiredFundingUsd ?? 0)}</p>
+          <p className="mt-2 text-2xl font-semibold text-white">
+            {formatUsd(decision?.requiredFundingUsd ?? 0)} {executionWallet.sessionAssetSymbol}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Wallet balance:{" "}
+            {executionWallet.sessionAssetBalance === null
+              ? "not loaded"
+              : `${executionWallet.sessionAssetBalance.toFixed(2)} ${executionWallet.sessionAssetSymbol}`}
+          </p>
         </div>
         <div className="glass-outline rounded-3xl p-4">
           <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Session expiry</p>

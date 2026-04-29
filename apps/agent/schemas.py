@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 
 
 TokenDiscoveryCategory = Literal["meme", "defi", "ai", "gaming", "rwa", "trending"]
-TokenDiscoveryChain = Literal["base", "bsc", "solana"]
+TokenDiscoveryChain = Literal["arbitrum-sepolia", "base", "bsc", "solana"]
 TokenExecutionStatus = Literal["executable", "needs_allowlist", "research_only", "unsupported_chain"]
 
 
@@ -40,6 +40,9 @@ class HealthResponse(BaseModel):
     status: Literal["ok"]
     mode: str
     timestamp: str
+    market_data_source: str
+    discovery_source: str
+    chain_gpt: dict[str, str | bool | None]
 
 
 class ResearchRankRequest(BaseModel):

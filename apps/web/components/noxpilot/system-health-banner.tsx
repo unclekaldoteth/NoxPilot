@@ -1,9 +1,16 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { CheckCircle2, Radio, ShieldAlert, XCircle } from "lucide-react";
+import type { AgentHealthResponse } from "@noxpilot/shared";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
+import { fetchAgentHealth } from "@/lib/research";
 
 type HealthStatus = "healthy" | "degraded" | "critical";
+type AgentHealthState =
+  | { status: "checking"; data: null; message: "Checking research agent..." }
+  | { status: "ok"; data: AgentHealthResponse; message: string }
+  | { status: "error"; data: null; message: string };
 
 export function SystemHealthBanner() {
   const {
@@ -16,6 +23,42 @@ export function SystemHealthBanner() {
     systemPaused
   } =
     useNoxPilot();
+  const [agentHealth, setAgentHealth] = useState<AgentHealthState>({
+    status: "checking",
+    data: null,
+    message: "Checking research agent..."
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkAgent() {
+      try {
+        const result = await fetchAgentHealth();
+        if (!cancelled) {
+          setAgentHealth({
+            status: "ok",
+            data: result.data,
+            message: "Research agent is reachable."
+          });
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setAgentHealth({
+            status: "error",
+            data: null,
+            message: error instanceof Error ? error.message : "Research agent is unreachable."
+          });
+        }
+      }
+    }
+
+    void checkAgent();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const checks = [
     {
@@ -42,6 +85,19 @@ export function SystemHealthBanner() {
       label: "Private config ready",
       ok: noxClientConfigReady,
       fix: "Add the public Nox gateway, handle, and application contract configuration."
+    },
+    {
+      label: "Research agent reachable",
+      ok: agentHealth.status === "ok",
+      fix:
+        agentHealth.status === "checking"
+          ? "Waiting for the FastAPI health check."
+          : "Deploy FastAPI and set NEXT_PUBLIC_AGENT_BASE_URL to its public /health-capable base URL."
+    },
+    {
+      label: "ChainGPT analyst active",
+      ok: Boolean(agentHealth.data?.chain_gpt.configured),
+      fix: "Set CHAINGPT_API_KEY on the deployed FastAPI agent so research explanations use ChainGPT."
     },
     {
       label: "Trading enabled",
@@ -93,6 +149,12 @@ export function SystemHealthBanner() {
                   : executionWallet.status === "executed"
                     ? "The swap already executed and the run is waiting to be closed."
                     : "No live session is open right now."}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Agent: {agentHealth.message}
+                {agentHealth.data?.chain_gpt.configured
+                  ? ` ChainGPT: ${agentHealth.data.chain_gpt.provider} (${agentHealth.data.chain_gpt.model ?? "default"}).`
+                  : " ChainGPT: not configured."}
               </p>
             </div>
           </div>

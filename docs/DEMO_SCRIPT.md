@@ -4,7 +4,8 @@
 
 Before presenting:
 
-- start the FastAPI agent locally
+- start the FastAPI agent locally or confirm the deployed `NEXT_PUBLIC_AGENT_BASE_URL`
+- confirm `/health` reports `chain_gpt.configured=true` when showing ChainGPT sponsor integration
 - ensure the browser wallet is connected to Arbitrum Sepolia
 - deploy or point to live `PolicyVault` and `ExecutionGuard`
 - deploy or point to a concrete confidential wrapper for the selected ERC-20
@@ -21,7 +22,7 @@ Open:
 
 ## Current Live Deployment
 
-Arbitrum Sepolia snapshot updated April 17, 2026:
+Arbitrum Sepolia snapshot updated April 29, 2026:
 
 - `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
 - `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
@@ -56,6 +57,7 @@ Say:
 Point at:
 
 - the `Next action` banner
+- System Health, including research agent and ChainGPT readiness
 - Vault Wallet
 - Execution Wallet
 - System Status
@@ -70,7 +72,7 @@ Say:
 
 Say:
 
-> The wallet balances are live reads. The policy card only fills in after wallet-backed encryption and a real contract write. The research card only fills in after live token discovery and the FastAPI agent response. The confidential asset state appears only after the guarded buy is wrapped through a configured Nox wrapper.
+> The wallet balances are live reads, including the USDC session-asset balance used for funding. The policy card only fills in after wallet-backed encryption and a real contract write. The research card only fills in after executable-lane selection or live token discovery and the FastAPI agent response. The confidential asset state appears only after the guarded buy is wrapped through a configured Nox wrapper.
 
 ### 4. Demo page
 
@@ -81,7 +83,7 @@ Click through:
 3. click `Verify live setup`
 4. in `Set Policy & Research`, complete the policy form
 5. `Encrypt & save policy on-chain`
-6. discover token candidates by category and chain
+6. choose `Use Executable Arbitrum Lane` for WETH/ARB/LINK, or discover research-only Base/BNB/Solana candidates by category and chain
 7. `Trigger live research`
 8. `Evaluate decision`
 9. in `Execute & Close`, `Open bounded session on-chain`
@@ -96,6 +98,10 @@ Click through:
 Say:
 
 > This is the canonical judged path. The UI no longer dumps the entire system at once. It keeps only the current step expanded, collapses future phases until they unlock, and uses the same next-action logic on desktop and mobile.
+
+Say:
+
+> The executable lane is deliberately separate from broader discovery. WETH, ARB, and LINK can move through the live Arbitrum Sepolia execution and wrapper path. Base, BNB, and Solana candidates make research more interesting, but stay clearly labeled as research-only unless the full deployment stack exists.
 
 ### 5. Explain the scoped execution model
 
@@ -112,6 +118,17 @@ Say:
 Say:
 
 > Discovery can show Base, BNB, and Solana candidates for a stronger research experience. In v1, those are research-only unless the full execution stack exists for that chain. The confidential wrapping path is Arbitrum Sepolia-only until official NoxCompute, gateway, subgraph, SDK resolver, router, deployment, and allowlist support are confirmed.
+
+### 6.5 ChainGPT proof point
+
+Point at:
+
+- System Health `ChainGPT analyst active`
+- Research Agent provider badge
+
+Say:
+
+> The numeric score stays deterministic in Python so execution-critical inputs are stable. ChainGPT is used as the Web3 analyst layer for the operator-facing explanation. If the API key is missing, the UI labels the local fallback instead of pretending ChainGPT was used.
 
 ### 7. Trust page
 
@@ -139,6 +156,7 @@ Say:
 - the current live wrapper set covers WETH, ARB, and LINK
 - public Nox Handle env configured
 - FastAPI agent running
+- `CHAINGPT_API_KEY` configured on the agent if presenting the ChainGPT integration
 - live market-data providers reachable from the Python agent runtime
 - selected token has route, wrapper, and allowlist config
 
@@ -149,13 +167,18 @@ Say:
 - The dashboard is visibly read-only and offers `Continue in Demo` instead of mixed action controls.
 - The demo page is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`.
 - The `Next action` banner changes as the live flow progresses.
+- System health shows FastAPI reachable and ChainGPT active.
+- The executable Arbitrum lane is separate from research-only discovery.
 - The timeline is empty until real actions occur.
 - Policy save shows only after the handle path and `PolicyVault.updatePolicyWithNox()` succeed.
 - Execution only proceeds after `ExecutionGuard.prepareConfidenceApproval()` and a live Handle `publicDecrypt()` proof confirm the confidential min-confidence gate.
 - Research ranking shows live market numbers and timestamps.
+- Research explanation shows ChainGPT provider/model when configured, or an explicit local fallback warning.
 - Base, BNB, and Solana candidates are labeled research-only unless execution and wrapper config exists.
 - Session funding, swap execution, wrapping, and settlement each require a confirmed tx hash.
 - Wrapped confidential position state includes the underlying token, wrapper address, chain ID, encrypted handle, ACL/reveal state, and wrap tx hash.
+- The confidential proof panel links wrapper and wrap transaction state and explains that swap/deposit are public while post-wrap balance state is confidential.
+- Current research, decision, confidential position, settlement, and timeline state survive browser refresh through local persistence.
 - Owner balance reveal uses the Nox handle client.
 
 ## Fallback Flow
@@ -180,7 +203,9 @@ If you must mention it, say:
 - [ ] Policy saved on-chain
 - [ ] Recommendation returned by the live FastAPI agent
 - [ ] Explanation returned by the live FastAPI agent
+- [ ] ChainGPT active shown when `CHAINGPT_API_KEY` is configured
 - [ ] Ranking inputs derived from live market rows
+- [ ] Executable Arbitrum lane used for live swap candidates
 - [ ] Executable status requires route, allowlist, guard, and wrapper config
 - [ ] Session opened through a real contract transaction
 - [ ] Live swap executed through a real contract transaction

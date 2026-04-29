@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: noxpilot-agent
+    runtime: python
+    rootDir: apps/agent
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: AGENT_MODE
+        value: live
+      - key: AGENT_ALLOWED_ORIGINS
+        sync: false
+      - key: CHAINGPT_API_KEY
+        sync: false
+      - key: CHAINGPT_BASE_URL
+        value: https://api.chaingpt.org
+      - key: CHAINGPT_MODEL
+        value: general_assistant
+      - key: MARKET_DATA_BASE_URL
+        value: https://api.coingecko.com/api/v3
+      - key: DEXSCREENER_BASE_URL
+        value: https://api.dexscreener.com

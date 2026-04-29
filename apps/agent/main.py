@@ -34,7 +34,9 @@ from schemas import (
     TokenDiscoveryResponse,
 )
 from services.discovery import DISCOVERY_SOURCE, discover_tokens
+from services.chaingpt import chaingpt_health
 from services.explainer import explain_recommendation_with_chain_gpt
+from services.market_data import MARKET_DATA_SOURCE
 from services.scoring import load_market_snapshots, rank_discovered_candidates, rank_tokens, utc_now_iso
 
 app = FastAPI(title="NoxPilot Research Agent", version="0.1.0")
@@ -60,6 +62,9 @@ async def health() -> HealthResponse:
         status="ok",
         mode=os.getenv("AGENT_MODE", "live"),
         timestamp=utc_now_iso(),
+        market_data_source=MARKET_DATA_SOURCE,
+        discovery_source=DISCOVERY_SOURCE,
+        chain_gpt=chaingpt_health(),
     )
 
 

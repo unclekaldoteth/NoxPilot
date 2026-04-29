@@ -21,6 +21,7 @@ The operator UX now follows one guided path:
 - dashboard is intentionally read-only and always points the operator back to the guided demo for actions
 - demo flow is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`
 - a shared `Next action` banner keeps the current live task obvious on both `/dashboard` and `/demo`
+- readiness now checks the FastAPI agent, ChainGPT configuration, wrapper config, and USDC session funding state
 
 ## Guided UX Flow
 
@@ -113,18 +114,15 @@ Required live env values:
 - `NEXT_PUBLIC_DEX_QUOTER_ADDRESS`
 - `NEXT_PUBLIC_SESSION_ASSET_ADDRESS`
 - `NEXT_PUBLIC_TOKEN_ETH_ADDRESS`
+- `NEXT_PUBLIC_TOKEN_ARB_ADDRESS`
 - `NEXT_PUBLIC_TOKEN_LINK_ADDRESS`
 - `NEXT_PUBLIC_NOX_APPLICATION_CONTRACT_ADDRESS`
 
 Required live env values for the confidential wrap path:
 
 - `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ETH_ADDRESS`
-- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS`
-
-Optional expansion values:
-
-- `NEXT_PUBLIC_TOKEN_ARB_ADDRESS`
 - `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
+- `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_LINK_ADDRESS`
 
 Optional Nox override values:
 
@@ -137,6 +135,10 @@ Dev-only fallback:
 - `NEXT_PUBLIC_ENABLE_DEV_MOCKS=true`
 - `NEXT_PUBLIC_APP_MODE=mock`
 
+Required server-side agent value for the ChainGPT sponsor path:
+
+- `CHAINGPT_API_KEY`
+
 ### 3. Start the Python research agent
 
 ```bash
@@ -146,6 +148,8 @@ pip install -r apps/agent/requirements.txt
 cd apps/agent
 python -m uvicorn main:app --reload
 ```
+
+For deployment, use `apps/agent/Dockerfile` or `render.yaml`, then set `NEXT_PUBLIC_AGENT_BASE_URL` / `AGENT_BASE_URL` to the deployed FastAPI base URL. The web readiness banner calls `/api/research/health`, which proxies to the agent `/health` endpoint and reports whether ChainGPT is configured.
 
 ### 4. Build or deploy the contracts
 
@@ -171,7 +175,7 @@ forge script script/DeployWrappers.s.sol:DeployWrappers --rpc-url "$ARBITRUM_SEP
 
 ## Current Live Arbitrum Sepolia Deployment
 
-Snapshot updated April 17, 2026:
+Snapshot updated April 29, 2026:
 
 - `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
 - `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
@@ -208,7 +212,7 @@ The guided UX is now grouped into three phases.
 ### Phase 2: Set Policy & Research
 
 5. Fill the policy form and click `Encrypt & save policy on-chain`.
-6. Optionally run token discovery to widen the candidate set.
+6. Use `Executable Arbitrum Lane` for WETH, ARB, and LINK, or optionally run Base/BNB/Solana discovery as research-only expansion.
 7. Click `Trigger live research`.
 8. Click `Evaluate decision`.
 
@@ -233,6 +237,7 @@ Fully live in the default judged path:
 - on-chain validation of the confidential daily-budget and min-confidence handles through `PolicyVault.updatePolicyWithNox()`
 - FastAPI `/health`, `/research/rank`, and `/research/explain`
 - live market data fetched by the Python agent from CoinGecko markets
+- ChainGPT explanation when `CHAINGPT_API_KEY` is configured on the FastAPI agent
 - real session-asset funding into `ExecutionGuard`
 - real exact-input guarded swap execution through the configured router
 - real post-buy confidential wrapping for supported live tokens
@@ -281,13 +286,15 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - The landing page explains the full operator journey in one glance: connect, discover, bounded swap, wrap confidentially.
 - The dashboard is visibly read-only and points back to the guided demo for actions.
 - The shared `Next action` banner on `/dashboard` and `/demo` always reflects the current live task.
-- The system status card reports whether contracts and Nox config are actually ready.
+- The system status card reports whether contracts, Nox config, FastAPI agent, ChainGPT, wrappers, and trading status are actually ready.
 - The confidential policy card shows handle references only after wallet-backed encryption succeeds and the Nox-proofed policy write confirms.
 - The execution flow prepares a confidential confidence-approval handle before the swap and only proceeds after the live Handle gateway returns a valid boolean proof.
-- The research card shows live source metadata and live market numbers.
+- The discovery card separates the executable Arbitrum lane from Base/BNB/Solana research-only expansion.
+- The research card shows live source metadata, live market numbers, and whether the explanation came from ChainGPT or local fallback.
 - Session funding, swap execution, and settlement each require real Arbitrum Sepolia transactions.
-- Wrapping and owner reveal require a deployed live wrapper and a real Nox handle operation.
+- Wrapping and owner reveal require a deployed live wrapper and a real Nox handle operation; the confidential proof panel links wrapper and transaction state.
 - The activity timeline stays empty until real actions or live agent responses occur.
+- Research, decision, confidential position, settlement, and timeline state persist locally so a browser refresh does not erase the current demo run.
 - On mobile, the demo shows a compact current phase with a `See all steps` toggle instead of a long always-open checklist.
 
 ## NO MOCKED DATA VALIDATION CHECKLIST
@@ -299,6 +306,7 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - [ ] `Encrypt & save policy on-chain` succeeds through the wallet-backed Nox path.
 - [ ] The saved policy appears from real chain state, not seeded dashboard defaults.
 - [ ] `Trigger live research` returns a live FastAPI response.
+- [ ] System readiness shows `Research agent reachable` and `ChainGPT analyst active`.
 - [ ] The research payload contains live market fields such as price, volume, or observed timestamp.
 - [ ] `Evaluate live decision` uses the live recommendation and current session state.
 - [ ] `Open bounded session on-chain` produces a real transaction.
@@ -314,13 +322,13 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - The daily-budget and min-confidence fields now use the Nox proof path; deeper confidential execution checks such as slippage remain future work.
 - The research agent depends on live market-data availability from CoinGecko.
 - Wallet balance USD estimates and settlement USD summaries depend on live market snapshots from the agent path.
+- Session funding decisions use the configured USDC session-asset balance, while native ETH is still required for gas.
 
 ## Helpful Commands
 
 ```bash
-pnpm build:nox-sdk
-pnpm --filter @noxpilot/web exec tsc --noEmit
-pnpm --filter @noxpilot/web build
-python3 -m py_compile apps/agent/main.py apps/agent/schemas.py apps/agent/services/*.py
-cd contracts && forge build && forge test -vv
+pnpm validate
+pnpm dev:web
+pnpm dev:agent
+cd contracts && forge test -vv
 ```
