@@ -138,6 +138,10 @@ Say:
 
 Say:
 
+> The confidential wrapper uses the Nox Protocol TEE-based ERC-7984 stack, not Zama/FHE and not an OpenZeppelin ERC-7984 implementation.
+
+Say:
+
 > The initial swap and wrapper deposit are public transactions. NoxPilot does not claim full transaction privacy. The privacy upgrade starts after wrapping, where the resulting balance and later accounting are represented through Nox handles and owner-controlled reveal.
 
 ### 6. Research-only chain explanation

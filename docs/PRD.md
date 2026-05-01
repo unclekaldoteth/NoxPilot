@@ -116,6 +116,8 @@ Package roles:
 
 V1 should use `@iexec-nox/nox-confidential-contracts@0.1.0` and create a thin concrete wrapper around `ERC20ToERC7984Wrapper` for each supported underlying ERC-20. The current Nox Solidity SDK resolver path is treated as Arbitrum Sepolia-only for v1; additional chains must not be marked executable until NoxCompute support and app config are verified.
 
+Compatibility requirement: NoxPilot must stay on the Nox Protocol TEE-based ERC-7984 stack. Zama/FHE ERC-7984 implementations and OpenZeppelin ERC-7984 implementations are out of scope and must not be used for the judged confidential asset path.
+
 This preserves a credible integration story without claiming full transaction privacy in the MVP.
 
 References:

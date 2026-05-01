@@ -10,6 +10,8 @@ NoxPilot used the Nox toolchain in three places:
 - `@iexec-nox/nox-protocol-contracts` for Solidity-side encrypted handle types, `Nox.fromExternal(...)`, `Nox.allow(...)`, and public decrypt proof validation.
 - `@iexec-nox/nox-confidential-contracts` for the ERC-7984-style confidential token pattern and the ERC-20 wrapper concept used by `NoxPilotConfidentialERC20Wrapper`.
 
+This project uses the Nox Protocol TEE-based ERC-7984 implementation only. It does not use Zama/FHE or OpenZeppelin ERC-7984 contracts.
+
 The strongest fit was the post-trade privacy flow: an agent can execute a bounded public ERC-20 buy, then move the acquired position into a confidential asset representation where post-wrap balances and reveal permissions are controlled through Nox handles and ACL.
 
 ## What Worked Well
@@ -47,4 +49,3 @@ NoxPilot became stronger when we treated Nox as a privacy and authorization laye
 2. `wrapLastOutput` converts the acquired ERC-20 into a confidential Nox asset.
 
 That separation made failures explainable, kept the product honest, and aligned the user story with what the current Nox tooling can prove.
-

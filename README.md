@@ -15,6 +15,8 @@ The judged/demo path is now live by default:
 - live fetched market inputs
 - real on-chain session open / guarded swap execution / confidential wrap / owner reveal / settlement sweep
 
+Nox compatibility note: the confidential asset path uses the Nox Protocol TEE-based ERC-7984 implementation from `@iexec-nox/nox-confidential-contracts` and `@iexec-nox/nox-protocol-contracts`. It does not use Zama/FHE or an OpenZeppelin ERC-7984 implementation; OpenZeppelin is only used for standard ERC-20 interfaces/utilities.
+
 The operator UX now follows one guided path:
 
 - landing page frames the 3-minute journey: connect wallet, discover token, bounded swap, wrap confidentially
@@ -357,3 +359,5 @@ pnpm dev:web
 pnpm dev:agent
 cd contracts && forge test -vv
 ```
+
+`pnpm validate` also runs `pnpm contracts:verify-nox-erc7984`, which fails if the confidential wrapper stops extending the Nox Protocol ERC-7984 contracts or if Zama/FHE/OpenZeppelin ERC-7984 imports appear in the contract path.

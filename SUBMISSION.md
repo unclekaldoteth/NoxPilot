@@ -56,6 +56,14 @@ Key deployment transactions:
 - `@iexec-nox/nox-protocol-contracts`: Solidity SDK path for `Nox.fromExternal(...)`, encrypted handles, `Nox.allow(...)`, and public decrypt validation.
 - `@iexec-nox/nox-confidential-contracts`: ERC-7984 confidential token contracts and the ERC-20-to-confidential-asset wrapper pattern.
 
+Compatibility note for reviewers: NoxPilot uses the Nox Protocol TEE-based ERC-7984 stack only. It does not use Zama/FHE or an OpenZeppelin ERC-7984 implementation. OpenZeppelin appears in the contracts only for ERC-20 interfaces, metadata, SafeERC20 transfers, and IERC165 support around the Nox wrapper.
+
+The repo enforces this with:
+
+```bash
+pnpm contracts:verify-nox-erc7984
+```
+
 ## No Mocked Data Policy
 
 The judged path must run with:

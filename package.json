@@ -15,7 +15,8 @@
     "validate:agent": "cd apps/agent && PYTHON_BIN=python3; if [ -x .venv/bin/python ]; then PYTHON_BIN=.venv/bin/python; fi; $PYTHON_BIN -m compileall -q -x '.*\\.venv.*' . && $PYTHON_BIN -m unittest discover -s tests",
     "contracts:build": "cd contracts && forge build",
     "contracts:test": "cd contracts && forge test",
-    "validate": "pnpm typecheck:nox-sdk && pnpm typecheck:web && pnpm build:web && pnpm validate:agent && pnpm contracts:test"
+    "contracts:verify-nox-erc7984": "bash scripts/verify-nox-erc7984.sh",
+    "validate": "pnpm typecheck:nox-sdk && pnpm typecheck:web && pnpm build:web && pnpm validate:agent && pnpm contracts:verify-nox-erc7984 && pnpm contracts:test"
   },
   "devDependencies": {
     "@iexec-nox/nox-confidential-contracts": "0.1.0",

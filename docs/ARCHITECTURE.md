@@ -174,6 +174,8 @@ Nox package responsibilities:
 - `@iexec-nox/nox-protocol-contracts`: Solidity SDK, encrypted handles, proof validation, and TEE-backed Nox operations
 - `@iexec-nox/nox-confidential-contracts`: ERC-7984 confidential token contracts and `ERC20ToERC7984Wrapper`
 
+NoxPilot intentionally uses the Nox Protocol TEE-based ERC-7984 implementation. It does not use Zama/FHE ERC-7984 contracts or an OpenZeppelin ERC-7984 implementation. The OpenZeppelin imports in the wrapper are limited to ERC-20 interfaces, SafeERC20, metadata, and IERC165 support around the Nox confidential wrapper.
+
 The contracts still store references for some fields, not full confidential proof verification everywhere. The daily-budget and min-confidence fields are the real Nox-native confidential policy path: they are encrypted with `@iexec-nox/handle`, submitted with handle proofs, validated in `PolicyVault`, and used to prepare an on-chain confidence-approval handle before execution.
 
 The confidential asset path begins after the public swap. The wrapper deposit is public, but the post-wrap balance and later confidential accounting use Nox handles and ACL-controlled reveal.
