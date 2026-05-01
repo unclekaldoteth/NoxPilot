@@ -288,7 +288,7 @@ export function PolicySetupForm() {
 
         {mode === "live" && (!walletConnected || !networkSupported || !noxClientConfigReady) ? (
           <div aria-live="polite" className="rounded-3xl border border-amber-400/20 bg-amber-400/10 p-4 text-sm text-amber-100">
-            Live policy save requires a connected wallet on Arbitrum Sepolia plus public Nox application-contract config.
+            Live policy save requires a connected wallet on Arbitrum Sepolia Testnet plus public Nox application-contract config.
           </div>
         ) : null}
 

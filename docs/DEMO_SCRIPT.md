@@ -6,7 +6,7 @@ Before presenting:
 
 - start the FastAPI agent locally or confirm the deployed `NEXT_PUBLIC_AGENT_BASE_URL`
 - confirm `/health` reports `chain_gpt.configured=true` when showing ChainGPT sponsor integration
-- ensure the browser wallet is connected to Arbitrum Sepolia
+- ensure the browser wallet is connected to Arbitrum Sepolia Testnet
 - deploy or point to live `PolicyVault` and `ExecutionGuard`
 - deploy or point to a concrete confidential wrapper for the selected ERC-20
 - confirm the connected wallet is the `PolicyVault` owner and `ExecutionGuard` admin
@@ -35,7 +35,7 @@ Before recording:
 
 Record these proof points:
 
-- live wallet address and Arbitrum Sepolia network
+- live wallet address and Arbitrum Sepolia Testnet network
 - `Verify live setup` succeeding against deployed contracts
 - Nox policy encryption and `PolicyVault.updatePolicyWithNox()`
 - FastAPI research result with live market timestamp
@@ -49,7 +49,7 @@ After recording, update `SUBMISSION.md` with the live app URL, agent health URL,
 
 ## Current Live Deployment
 
-Arbitrum Sepolia snapshot updated April 29, 2026:
+Arbitrum Sepolia Testnet snapshot updated April 29, 2026:
 
 - `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
 - `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
@@ -110,7 +110,7 @@ Click through:
 3. click `Verify live setup`
 4. in `Set Policy & Research`, complete the policy form
 5. `Encrypt & save policy on-chain`
-6. choose `Use Executable Arbitrum Lane` for WETH/ARB/LINK, or discover research-only Base/BNB/Solana candidates by category and chain
+6. choose `Use Executable Arbitrum Testnet Lane` for WETH/ARB/LINK, or discover research-only Base/BNB/Solana candidates by category and chain
 7. `Trigger live research`
 8. `Evaluate decision`
 9. in `Execute & Close`, `Open bounded session on-chain`
@@ -128,7 +128,7 @@ Say:
 
 Say:
 
-> The executable lane is deliberately separate from broader discovery. WETH, ARB, and LINK can move through the live Arbitrum Sepolia execution and wrapper path. Base, BNB, and Solana candidates make research more interesting, but stay clearly labeled as research-only unless the full deployment stack exists.
+> The executable lane is deliberately separate from broader discovery. WETH, ARB, and LINK can move through the live Arbitrum Sepolia Testnet execution and wrapper path. Base, BNB, and Solana candidates make research more interesting, but stay clearly labeled as research-only unless the full deployment stack exists.
 
 ### 5. Explain the scoped execution model
 
@@ -148,7 +148,7 @@ Say:
 
 Say:
 
-> Discovery can show Base, BNB, and Solana candidates for a stronger research experience. In v1, those are research-only unless the full execution stack exists for that chain. The confidential wrapping path is Arbitrum Sepolia-only until official NoxCompute, gateway, subgraph, SDK resolver, router, deployment, and allowlist support are confirmed.
+> Discovery can show Base, BNB, and Solana candidates for a stronger research experience. In v1, those are research-only unless the full execution stack exists for that chain. The confidential wrapping path is Arbitrum Sepolia Testnet only until official NoxCompute, gateway, subgraph, SDK resolver, router, deployment, and allowlist support are confirmed.
 
 ### 6.5 ChainGPT proof point
 
@@ -185,7 +185,7 @@ Use the draft in `SUBMISSION.md`. It already includes the project description, G
 
 ### Prerequisites
 
-- wallet connected on Arbitrum Sepolia
+- wallet connected on Arbitrum Sepolia Testnet
 - live `PolicyVault` and `ExecutionGuard`
 - live concrete wrapper for the selected ERC-20
 - the current live wrapper set covers WETH, ARB, and LINK
@@ -203,7 +203,7 @@ Use the draft in `SUBMISSION.md`. It already includes the project description, G
 - The demo page is grouped into `Connect & Verify`, `Set Policy & Research`, and `Execute & Close`.
 - The `Next action` banner changes as the live flow progresses.
 - System health shows FastAPI reachable and ChainGPT active.
-- The executable Arbitrum lane is separate from research-only discovery.
+- The executable Arbitrum testnet lane is separate from research-only discovery.
 - The timeline is empty until real actions occur.
 - Policy save shows only after the handle path and `PolicyVault.updatePolicyWithNox()` succeed.
 - Execution only proceeds after `ExecutionGuard.prepareConfidenceApproval()` and a live Handle `publicDecrypt()` proof confirm the confidential min-confidence gate.
@@ -232,7 +232,7 @@ If you must mention it, say:
 ## NO MOCKED DATA VALIDATION CHECKLIST
 
 - [ ] Real wallet connected
-- [ ] Arbitrum Sepolia selected
+- [ ] Arbitrum Sepolia Testnet selected
 - [ ] Topology initialized against deployed contracts
 - [ ] Policy encrypted through live Nox path
 - [ ] Policy saved on-chain
@@ -240,7 +240,7 @@ If you must mention it, say:
 - [ ] Explanation returned by the live FastAPI agent
 - [ ] ChainGPT active shown when `CHAINGPT_API_KEY` is configured
 - [ ] Ranking inputs derived from live market rows
-- [ ] Executable Arbitrum lane used for live swap candidates
+- [ ] Executable Arbitrum testnet lane used for live swap candidates
 - [ ] Executable status requires route, allowlist, guard, and wrapper config
 - [ ] Session opened through a real contract transaction
 - [ ] Live swap executed through a real contract transaction

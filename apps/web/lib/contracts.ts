@@ -312,7 +312,7 @@ export function toSessionSnapshot(
 }
 
 export function describeWriteAction(txHash: Hex, verb: string) {
-  return `${verb} confirmed on Arbitrum Sepolia. Tx: ${txHash}`;
+  return `${verb} confirmed on Arbitrum Sepolia Testnet. Tx: ${txHash}`;
 }
 
 export const SUPPORTED_CHAIN_ID = DEFAULT_CHAIN_ID;

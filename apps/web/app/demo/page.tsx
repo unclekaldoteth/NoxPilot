@@ -1,6 +1,7 @@
 "use client";
 
 import { SectionTitle } from "@noxpilot/ui";
+import { DEFAULT_NETWORK } from "@noxpilot/shared";
 import { DemoWizard } from "@/components/noxpilot/demo-wizard";
 import { WalletConnectButton } from "@/components/noxpilot/wallet-connect-button";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export default function DemoPage() {
       <SectionTitle
         eyebrow="Hackathon demo"
         title="Guided Operator Flow"
-        description="Move through one clear live path: connect and verify, set a private policy and rank candidates, then execute and close the run."
+        description={`Move through one clear live path on ${DEFAULT_NETWORK}: connect and verify, set a private policy and rank candidates, then execute and close the run.`}
       />
 
       <NextActionBanner surface="demo" />
@@ -46,7 +47,7 @@ export default function DemoPage() {
         {/* Step 1: Connect Wallet */}
         <div className="space-y-4">
           <p className="text-sm leading-6 text-slate-300">
-            Connect the wallet that owns the deployed PolicyVault and administers ExecutionGuard on Arbitrum Sepolia.
+            Connect the wallet that owns the deployed PolicyVault and administers ExecutionGuard on Arbitrum Sepolia Testnet.
           </p>
           <WalletConnectButton />
         </div>
@@ -69,7 +70,7 @@ export default function DemoPage() {
             ) : !walletConnected ? (
               "Connect Wallet First"
             ) : !networkSupported ? (
-              "Switch to Arbitrum Sepolia"
+              "Switch to Arbitrum Sepolia Testnet"
             ) : !liveConfigReady ? (
               "Finish Live Contract Setup"
             ) : (

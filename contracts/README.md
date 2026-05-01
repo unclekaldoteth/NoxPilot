@@ -1,6 +1,6 @@
 # NoxPilot Contracts
 
-The `contracts/` package is Foundry-based and targets Arbitrum Sepolia by default. The contracts are intentionally scoped as hackathon MVP skeletons: they compile, they can be smoke-tested locally, and they model bounded execution without claiming production-ready confidential enforcement on-chain.
+The `contracts/` package is Foundry-based and targets Arbitrum Sepolia Testnet by default. The contracts are intentionally scoped as hackathon MVP skeletons: they compile, they can be smoke-tested locally, and they model bounded execution without claiming production-ready confidential enforcement on-chain.
 
 ## Contracts
 
@@ -18,7 +18,7 @@ The `contracts/` package is Foundry-based and targets Arbitrum Sepolia by defaul
 ## Prerequisites
 
 - Foundry installed locally: `forge --version`
-- An Arbitrum Sepolia RPC URL
+- An Arbitrum Sepolia Testnet RPC URL
 - A funded deployer key if you want to broadcast
 
 If Foundry is not installed yet:
@@ -37,7 +37,7 @@ cd contracts
 cp .env.example .env
 ```
 
-The shipped template already fills the public Arbitrum Sepolia defaults used by this repo:
+The shipped template already fills the public Arbitrum Sepolia Testnet defaults used by this repo:
 
 - `ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc`
 - `SESSION_ASSET_ADDRESS=0x75faf114eafb1BDbe2F0316DF893fd58CE46AA4d` for Circle test USDC
@@ -46,7 +46,7 @@ The shipped template already fills the public Arbitrum Sepolia defaults used by 
 
 You still need to set:
 
-- `PRIVATE_KEY` to a funded Arbitrum Sepolia deployer
+- `PRIVATE_KEY` to a funded Arbitrum Sepolia Testnet deployer
 - `OWNER_ADDRESS` to the wallet that should own `PolicyVault`
 - `EXECUTION_WALLET_ADDRESS` to the isolated operator wallet registered in the vault
 
@@ -96,7 +96,7 @@ forge script script/Deploy.s.sol:Deploy \
   -vv
 ```
 
-The first command is a local dry-run. The second broadcasts to Arbitrum Sepolia.
+The first command is a local dry-run. The second broadcasts to Arbitrum Sepolia Testnet.
 
 ## Deploy Wrappers Only
 
@@ -141,7 +141,7 @@ After wrapper deployment, copy the emitted wrapper addresses into:
 
 ## Bootstrap The ARB Execution Lane
 
-Use this path only when ARB is not yet executable because Arbitrum Sepolia does not already have a suitable `ARB/USDC` pool for the configured router/quoter/session-asset path.
+Use this path only when ARB is not yet executable because Arbitrum Sepolia Testnet does not already have a suitable `ARB/USDC` pool for the configured router/quoter/session-asset path.
 
 What it does:
 
@@ -181,10 +181,10 @@ Important:
 - this path creates a testnet demo ARB market lane; it is not an official bridged ARB deployment
 - the resulting `TOKEN_ARB_ADDRESS` should be copied into the app env after broadcast
 - the resulting ARB wrapper address should be copied into `NEXT_PUBLIC_CONFIDENTIAL_WRAPPER_ARB_ADDRESS`
-- the wallet must already hold Arbitrum Sepolia test `USDC`, because the script no longer performs a fragile testnet seed swap
+- the wallet must already hold test `USDC` on Arbitrum Sepolia Testnet, because the script no longer performs a fragile testnet seed swap
 - `ARB_BOOTSTRAP_SESSION_ASSET_SEED_AMOUNT` should stay below the wallet's available `USDC` balance so some session funding remains after pool bootstrap
 
-## Current Live Arbitrum Sepolia Deployment
+## Current Live Arbitrum Sepolia Testnet Deployment
 
 Snapshot updated April 29, 2026:
 
@@ -214,8 +214,8 @@ Broadcast hashes:
 - `PRIVATE_KEY`: deployer private key used by the Foundry script
 - `OWNER_ADDRESS`: owner of the deployed `PolicyVault`
 - `EXECUTION_WALLET_ADDRESS`: isolated operational wallet registered in the vault
-- `SESSION_ASSET_ADDRESS`: ERC-20 used as the session funding asset in the guarded swap path; the template defaults to Circle test USDC on Arbitrum Sepolia
-- `SWAP_ROUTER_ADDRESS`: router that `ExecutionGuard` will call for `exactInputSingle`; the template defaults to Uniswap `SwapRouter02` on Arbitrum Sepolia
+- `SESSION_ASSET_ADDRESS`: ERC-20 used as the session funding asset in the guarded swap path; the template defaults to Circle test USDC on Arbitrum Sepolia Testnet
+- `SWAP_ROUTER_ADDRESS`: router that `ExecutionGuard` will call for `exactInputSingle`; the template defaults to Uniswap `SwapRouter02` on Arbitrum Sepolia Testnet
 - `DEFAULT_POOL_FEE`: pool fee for the default exact-input route, for example `3000`
 
 ## Related Web Env Defaults

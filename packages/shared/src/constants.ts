@@ -1,5 +1,5 @@
 export const APP_NAME = "NoxPilot";
-export const DEFAULT_NETWORK = "Arbitrum Sepolia";
+export const DEFAULT_NETWORK = "Arbitrum Sepolia Testnet";
 export const DEFAULT_CHAIN_ID = 421614;
 
 export const TRUST_PILLARS = [

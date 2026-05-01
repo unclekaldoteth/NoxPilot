@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Radio, ShieldAlert, XCircle } from "lucide-react";
-import type { AgentHealthResponse } from "@noxpilot/shared";
+import { DEFAULT_NETWORK, type AgentHealthResponse } from "@noxpilot/shared";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { fetchAgentHealth } from "@/lib/research";
 
@@ -67,9 +67,9 @@ export function SystemHealthBanner() {
       fix: "Connect the owner/admin wallet that controls the deployed contracts."
     },
     {
-      label: "Correct network",
+      label: `${DEFAULT_NETWORK} network`,
       ok: networkSupported,
-      fix: "Switch the connected wallet to Arbitrum Sepolia."
+      fix: `Switch the connected wallet to ${DEFAULT_NETWORK}.`
     },
     {
       label: "Live contract config",

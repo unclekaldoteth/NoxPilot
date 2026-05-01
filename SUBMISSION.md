@@ -2,16 +2,16 @@
 
 ## Project Summary
 
-NoxPilot is a bounded confidential execution agent for crypto operators. The app lets a user connect an owner wallet, encrypt private policy thresholds with Nox handles, discover and rank token opportunities with a FastAPI research agent, execute one guarded ERC-20 buy on Arbitrum Sepolia, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
+NoxPilot is a bounded confidential execution agent for crypto operators. The app lets a user connect an owner wallet, encrypt private policy thresholds with Nox handles, discover and rank token opportunities with a FastAPI research agent, execute one guarded ERC-20 buy on Arbitrum Sepolia Testnet, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
 
 The core claim is intentionally scoped: the swap and wrapper deposit are public, but post-wrap balances, reveal permissions, and confidential accounting are handled through Nox handles and ACL-controlled reveal flows.
 
 ## Submission Links
 
-Replace the placeholders below before final DoraHacks/X submission:
+The live app and agent are deployed. Fill the demo video URL before final DoraHacks/X submission:
 
-- Live app: `<deployed Vercel URL>`
-- Research agent health: `<deployed Railway /health URL>`
+- Live app: <https://noxpilot-web.vercel.app/>
+- Research agent health: <https://noxpilot-agent-production.up.railway.app/health>
 - Demo video, max 4 minutes: `<public video URL>`
 - GitHub repo: <https://github.com/unclekaldoteth/NoxPilot>
 - DoraHacks page: <https://dorahacks.io/hackathon/vibe-coding-iexec/detail>
@@ -24,12 +24,12 @@ The submitted work in this repository includes:
 - FastAPI research agent with DexScreener discovery, CoinGecko market snapshots, deterministic scoring, and ChainGPT explanation when configured.
 - Nox Handle integration through `packages/nox-sdk`.
 - `PolicyVault`, `ExecutionGuard`, and `NoxPilotConfidentialERC20Wrapper` contracts.
-- Arbitrum Sepolia deployment config for WETH, ARB, and LINK execution/wrapper lanes.
+- Arbitrum Sepolia Testnet deployment config for WETH, ARB, and LINK execution/wrapper lanes.
 - Documentation, demo script, iExec feedback, no-mock validation checklist, and CI validation.
 
 Open-source dependencies and sponsor SDKs are listed in `package.json`, `apps/agent/requirements.txt`, and contract imports. The project uses standard MIT-compatible app code in this repository plus external package licenses from installed dependencies.
 
-## Current Live Arbitrum Sepolia Deployment
+## Current Live Arbitrum Sepolia Testnet Deployment
 
 | Component | Address | Explorer |
 |---|---|---|
@@ -76,7 +76,7 @@ NEXT_PUBLIC_ENABLE_DEV_MOCKS=false
 Live proof checklist:
 
 - [ ] Real wallet connected.
-- [ ] Wallet on Arbitrum Sepolia.
+- [ ] Wallet on Arbitrum Sepolia Testnet.
 - [ ] `/api/research/health` reports FastAPI reachable.
 - [ ] Agent `/health` reports ChainGPT configured when presenting sponsor integration.
 - [ ] `Verify live setup` succeeds against deployed contracts.
@@ -98,8 +98,8 @@ Use this recording structure:
 
 1. `0:00-0:25`: Explain the problem: autonomous agents should not get unlimited wallet authority, and public post-trade balances leak strategy.
 2. `0:25-0:55`: Open landing page and dashboard. Show the guided `Next action` UX and live readiness checks.
-3. `0:55-1:45`: Connect wallet, verify Arbitrum Sepolia, encrypt policy with Nox, and save policy on-chain.
-4. `1:45-2:25`: Use the executable Arbitrum lane, trigger live research, and show ChainGPT explanation if configured.
+3. `0:55-1:45`: Connect wallet, verify Arbitrum Sepolia Testnet, encrypt policy with Nox, and save policy on-chain.
+4. `1:45-2:25`: Use the executable Arbitrum testnet lane, trigger live research, and show ChainGPT explanation if configured.
 5. `2:25-3:20`: Open bounded session, execute one guarded swap, then wrap the acquired ERC-20 into the confidential wrapper.
 6. `3:20-3:50`: Reveal confidential balance as owner, show privacy boundary, and settle session.
 7. `3:50-4:00`: Close with trust model: research suggests, TypeScript/contract layer enforces, Nox handles protect private policy and post-wrap accounting.
@@ -114,7 +114,7 @@ An AI research agent can discover a token, but execution stays bounded by privat
 After the guarded ERC-20 buy, NoxPilot wraps the position into a Nox confidential asset so post-trade balance accounting becomes ACL-controlled.
 
 Demo: <public demo video URL>
-App: <deployed web app URL>
+App: https://noxpilot-web.vercel.app/
 GitHub: https://github.com/unclekaldoteth/NoxPilot
 
 #iExec #DoraHacks #Nox #Web3AI
@@ -122,8 +122,8 @@ GitHub: https://github.com/unclekaldoteth/NoxPilot
 
 ## Final Submission Checklist
 
-- [ ] Live web URL filled in this file and README.
-- [ ] Railway agent `/health` URL filled in this file and README.
+- [x] Live web URL filled in this file and README.
+- [x] Railway agent `/health` URL filled in this file and README.
 - [ ] Demo video URL filled in this file and README.
 - [ ] X post published with project description, demo video, GitHub URL, and live app URL.
 - [ ] `feedback.md` committed.

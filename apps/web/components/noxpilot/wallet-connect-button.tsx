@@ -4,6 +4,7 @@ import { Loader2, Wallet } from "lucide-react";
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { DEFAULT_NETWORK } from "@noxpilot/shared";
 import { truncateAddress } from "@/lib/format";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 import { SUPPORTED_CHAIN_ID } from "@/lib/contracts";
@@ -40,7 +41,7 @@ export function WalletConnectButton() {
             disabled={isSwitchingChain}
           >
             {isSwitchingChain ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Switch to Arbitrum Sepolia
+            Switch to {DEFAULT_NETWORK}
           </Button>
         ) : null}
         <Button

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, LockKeyhole, Search, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
-import { APP_NAME, TRUST_PILLARS } from "@noxpilot/shared";
+import { APP_NAME, DEFAULT_NETWORK, TRUST_PILLARS } from "@noxpilot/shared";
 import { MetricPill, SectionTitle, SurfaceCard } from "@noxpilot/ui";
 import { WalletConnectButton } from "@/components/noxpilot/wallet-connect-button";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 const PILLAR_ICONS = [WalletCards, Sparkles, LockKeyhole, ShieldCheck] as const;
 
 const DEMO_STEPS = [
-  { num: 1, label: "Connect owner wallet", sub: "Arbitrum Sepolia" },
+  { num: 1, label: "Connect owner wallet", sub: "Arbitrum Sepolia Testnet" },
   { num: 2, label: "Discover and rank a token", sub: "Base, BNB, Solana" },
   { num: 3, label: "Execute one bounded swap", sub: "Guarded session" },
   { num: 4, label: "Wrap the result confidentially", sub: "Nox asset" }
@@ -45,7 +45,7 @@ export default function HomePage() {
               Let the agent find the trade. Keep the authority bounded.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-slate-300">
-              {APP_NAME} guides you through one clear live flow: connect the owner wallet, discover a token, execute one guarded swap, then turn the acquired ERC-20 into a confidential Nox position.
+              {APP_NAME} guides you through one clear live flow on {DEFAULT_NETWORK}: connect the owner wallet, discover a token, execute one guarded swap, then turn the acquired ERC-20 into a confidential Nox position.
             </p>
           </div>
 
@@ -63,6 +63,7 @@ export default function HomePage() {
 
           <div className="flex flex-wrap items-center gap-4">
             <WalletConnectButton />
+            <MetricPill label="Network" value={DEFAULT_NETWORK} accent="cyan" />
             <MetricPill label="Outcome" value="Bounded confidential execution" accent="emerald" />
           </div>
         </div>

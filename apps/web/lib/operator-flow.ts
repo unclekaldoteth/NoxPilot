@@ -68,9 +68,9 @@ export const OPERATOR_STEPS: Array<{
     phase: "connect-verify",
     title: "Connect Owner Wallet",
     shortLabel: "Connect",
-    description: "Use the deployed owner/admin wallet on Arbitrum Sepolia before anything else unlocks.",
+    description: "Use the deployed owner/admin wallet on Arbitrum Sepolia Testnet before anything else unlocks.",
     doneLabel: "Owner wallet connected on the supported chain.",
-    lockedLabel: "Connect the owner wallet on Arbitrum Sepolia first."
+    lockedLabel: "Connect the owner wallet on Arbitrum Sepolia Testnet first."
   },
   {
     key: "topology",
@@ -207,7 +207,7 @@ export function getNextOperatorAction(state: OperatorFlowState) {
     return {
       phaseLabel: "Connect & Verify",
       stepKey: "connect" as const,
-      title: "Switch to Arbitrum Sepolia",
+      title: "Switch to Arbitrum Sepolia Testnet",
       description: "The live path stays blocked until the owner wallet is on the supported chain.",
       buttonLabel: "Fix in demo"
     };

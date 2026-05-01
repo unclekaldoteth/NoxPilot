@@ -2,6 +2,7 @@
 
 import { Radar, ShieldCheck } from "lucide-react";
 import { DotStatus, SurfaceCard } from "@noxpilot/ui";
+import { DEFAULT_NETWORK } from "@noxpilot/shared";
 import { Badge } from "@/components/ui/badge";
 import { useNoxPilot } from "@/components/providers/app-state-provider";
 
@@ -18,7 +19,7 @@ export function SystemStatusCard() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-white">System Status</h3>
-            <p className="text-sm leading-6 text-slate-300">High-level health for the live run: environment, wallet readiness, and session state.</p>
+            <p className="text-sm leading-6 text-slate-300">High-level health for the {DEFAULT_NETWORK} live run: environment, wallet readiness, and session state.</p>
           </div>
         </div>
         <Badge variant={systemPaused ? "danger" : "success"}>{systemPaused ? "Paused" : "Operational"}</Badge>
@@ -41,7 +42,7 @@ export function SystemStatusCard() {
                 ? noxClientConfigReady
                   ? "Wallet, network, and private-config plumbing are ready for the guarded live flow."
                   : "Wallet is connected, but the public Nox configuration is still missing."
-                : "Switch the connected wallet to Arbitrum Sepolia."
+                : `Switch the connected wallet to ${DEFAULT_NETWORK}.`
               : "Connect the owner wallet used for the deployed live contracts."}
           </p>
         </div>

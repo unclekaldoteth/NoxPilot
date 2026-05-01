@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { SectionTitle, SurfaceCard } from "@noxpilot/ui";
+import { DEFAULT_NETWORK } from "@noxpilot/shared";
 import { SystemHealthBanner } from "@/components/noxpilot/system-health-banner";
 import { ActivityTimeline } from "@/components/noxpilot/activity-timeline";
 import { ConfidentialPositionCard } from "@/components/noxpilot/confidential-position-card";
@@ -23,7 +24,7 @@ export default function DashboardPage() {
       <SectionTitle
         eyebrow="Operator dashboard"
         title="Live Run Status"
-        description="Read-only monitoring for the current live flow. Use the guided demo to take actions; use this page to review readiness, state, and outcomes."
+        description={`Read-only monitoring for the current ${DEFAULT_NETWORK} live flow. Use the guided demo to take actions; use this page to review readiness, state, and outcomes.`}
       />
 
       <NextActionBanner surface="dashboard" />

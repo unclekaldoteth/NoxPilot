@@ -6,7 +6,7 @@ NoxPilot is a confidential multi-agent crypto execution MVP designed for hackath
 
 The strongest v1 product story is now: the agent discovers and researches an ERC-20 opportunity, executes one bounded buy through `ExecutionGuard`, then converts the acquired ERC-20 position into a Nox confidential ERC-7984-style asset. This means NoxPilot does not stop at "AI made a safe swap"; it demonstrates a post-trade privacy upgrade where the resulting position can be represented by encrypted Nox handles and revealed only through explicit ACL-controlled flows.
 
-V1 execution and confidential wrapping are scoped to Arbitrum Sepolia. Base, BNB, and Solana discovery can improve recommendations, but they remain research-only or future execution lanes until official NoxCompute, gateway, subgraph, Solidity SDK resolver, router, deployment, and allowlist support are confirmed for those environments.
+V1 execution and confidential wrapping are scoped to Arbitrum Sepolia Testnet. Base, BNB, and Solana discovery can improve recommendations, but they remain research-only or future execution lanes until official NoxCompute, gateway, subgraph, Solidity SDK resolver, router, deployment, and allowlist support are confirmed for those environments.
 
 ## 2. Problem Statement
 
@@ -43,13 +43,13 @@ In scope:
 
 - vault and execution wallet model
 - confidential policy setup and encrypted handle summary
-- executable Arbitrum Sepolia lane for WETH, ARB, and LINK
+- executable Arbitrum Sepolia Testnet lane for WETH, ARB, and LINK
 - category and chain-based token discovery for richer research-only inputs
 - research agent that ranks token opportunities
 - ChainGPT analyst explanation with honest local fallback labeling
 - execution decision engine in TypeScript
-- one bounded live exact-input swap per session on Arbitrum Sepolia
-- post-buy confidential wrapping of the acquired ERC-20 position on Arbitrum Sepolia
+- one bounded live exact-input swap per session on Arbitrum Sepolia Testnet
+- post-buy confidential wrapping of the acquired ERC-20 position on Arbitrum Sepolia Testnet
 - confidential position metadata, reveal state, and owner-only balance reveal flow
 - activity log, trust page, and polished dashboard UX
 - Solidity skeletons for policy, execution guard, and confidential wrapper integration with one real guarded swap path
@@ -102,7 +102,7 @@ This keeps main capital isolated from operational execution while allowing the r
 
 Agent B is the authority boundary. Research does not directly trigger spending, and wrapping only happens after the TypeScript layer confirms that the token, chain, DEX route, `ExecutionGuard`, and wrapper configuration are all supported and allowlisted.
 
-The v1 discovery UX separates two paths: `Executable Arbitrum Lane` for WETH, ARB, and LINK candidates that can proceed through live execution and wrapping, and Base/BNB/Solana category discovery for research-only expansion.
+The v1 discovery UX separates two paths: `Executable Arbitrum Testnet Lane` for WETH, ARB, and LINK candidates that can proceed through live execution and wrapping, and Base/BNB/Solana category discovery for research-only expansion.
 
 ## 8. Nox Integration Role
 
@@ -114,7 +114,7 @@ Package roles:
 - `@iexec-nox/nox-protocol-contracts`: Nox Solidity SDK primitives, encrypted handle types, proof validation, and TEE-backed operations used by contracts.
 - `@iexec-nox/nox-confidential-contracts`: ERC-7984 confidential token contracts and `ERC20ToERC7984Wrapper` patterns for transforming ERC-20 assets into confidential assets.
 
-V1 should use `@iexec-nox/nox-confidential-contracts@0.1.0` and create a thin concrete wrapper around `ERC20ToERC7984Wrapper` for each supported underlying ERC-20. The current Nox Solidity SDK resolver path is treated as Arbitrum Sepolia-only for v1; additional chains must not be marked executable until NoxCompute support and app config are verified.
+V1 should use `@iexec-nox/nox-confidential-contracts@0.1.0` and create a thin concrete wrapper around `ERC20ToERC7984Wrapper` for each supported underlying ERC-20. The current Nox Solidity SDK resolver path is treated as Arbitrum Sepolia Testnet only for v1; additional chains must not be marked executable until NoxCompute support and app config are verified.
 
 Compatibility requirement: NoxPilot must stay on the Nox Protocol TEE-based ERC-7984 stack. Zama/FHE ERC-7984 implementations and OpenZeppelin ERC-7984 implementations are out of scope and must not be used for the judged confidential asset path.
 
@@ -175,10 +175,10 @@ Privacy boundary:
 - shared `Next action` banner across `/dashboard` and `/demo`
 - readiness banner that explains blocking issues in plain language
 - readiness banner that checks wallet, network, contracts, Nox config, FastAPI reachability, ChainGPT configuration, and trading state
-- executable Arbitrum lane before live research scoring
+- executable Arbitrum testnet lane before live research scoring
 - category and chain token discovery for Base, BNB, and Solana research expansion
 - ChainGPT-assisted explanation for top research candidates when configured, with visible local fallback warning when not configured
-- post-buy confidential wrapping for supported Arbitrum Sepolia ERC-20 outputs
+- post-buy confidential wrapping for supported Arbitrum Sepolia Testnet ERC-20 outputs
 - confidential proof panel with wrapper address, handle state, ACL state, privacy boundary, and explorer links
 - owner-only confidential balance reveal state
 - local persistence for research, decision, confidential position, settlement, and timeline state during the demo run
@@ -200,7 +200,7 @@ Privacy boundary:
 3. Enter policy values.
 4. Encrypt relevant policy thresholds with the Nox wrapper.
 5. Save policy on-chain and display public-safe metadata.
-6. Choose the executable Arbitrum lane or discover research-only Base/BNB/Solana candidates by category and chain.
+6. Choose the executable Arbitrum testnet lane or discover research-only Base/BNB/Solana candidates by category and chain.
 7. Trigger the live research agent to score the vetted candidate set.
 8. Review ranked recommendation and explanation.
 9. Run TypeScript execution decisioning.
@@ -236,7 +236,7 @@ Privacy boundary:
 - confidential values can be encrypted through the live Nox wrapper path
 - the FastAPI agent exposes health, rank, explain, market, and discovery-backed research endpoints
 - the judged path uses live market-data inputs for ranking and explanation
-- the executable Arbitrum lane only marks candidates executable when token, route, guard, allowlist, and wrapper config exist
+- the executable Arbitrum testnet lane only marks candidates executable when token, route, guard, allowlist, and wrapper config exist
 - the execution layer checks score threshold, trade limit, budget, token whitelist, wrapper availability, and session status
 - the live execution path performs a real guarded exact-input swap instead of a synthetic success state
 - after a guarded buy, the app records a confidential position handle for the wrapped output

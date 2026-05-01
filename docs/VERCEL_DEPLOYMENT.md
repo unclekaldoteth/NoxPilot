@@ -27,8 +27,8 @@ NEXT_PUBLIC_ENABLE_DEV_MOCKS=false
 
 # Set to your deployed FastAPI agent URL (no trailing slash), e.g. https://noxpilot-agent.yourdomain.com
 # AGENT_BASE_URL is server-side; NEXT_PUBLIC_AGENT_BASE_URL lets client-side readiness labels show the same target.
-AGENT_BASE_URL=
-NEXT_PUBLIC_AGENT_BASE_URL=
+AGENT_BASE_URL=https://noxpilot-agent-production.up.railway.app
+NEXT_PUBLIC_AGENT_BASE_URL=https://noxpilot-agent-production.up.railway.app
 
 NEXT_PUBLIC_ARBITRUM_SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 NEXT_PUBLIC_POLICY_VAULT_ADDRESS=0xAfF2d2794cFE82f75086FD715BFd198585b69b81

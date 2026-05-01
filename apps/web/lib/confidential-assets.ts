@@ -46,7 +46,7 @@ export function getConfidentialWrapperSupport(
   if (chainId !== SUPPORTED_CHAIN_ID) {
     return {
       supported: false,
-      reason: "Confidential wrapping is Arbitrum Sepolia-only in v1.",
+      reason: "Confidential wrapping is Arbitrum Sepolia Testnet only in v1.",
       wrapperAddress: null,
       token: null
     };

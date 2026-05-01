@@ -9,7 +9,7 @@ NoxPilot has four execution domains:
 3. `packages/*`: shared schemas, Nox wrapper, and UI primitives
 4. `contracts`: Foundry contracts for bounded session control and confidential wrapper integration
 
-The v1 product path is intentionally narrow: discover and research a token, execute one bounded ERC-20 buy on Arbitrum Sepolia, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
+The v1 product path is intentionally narrow: discover and research a token, execute one bounded ERC-20 buy on Arbitrum Sepolia Testnet, then wrap the acquired ERC-20 into a Nox confidential ERC-7984-style asset.
 
 The operator UX now mirrors that path explicitly:
 
@@ -20,7 +20,7 @@ The operator UX now mirrors that path explicitly:
 
 ## Current Live Deployment
 
-Arbitrum Sepolia snapshot updated April 29, 2026:
+Arbitrum Sepolia Testnet snapshot updated April 29, 2026:
 
 - `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
 - `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
@@ -48,7 +48,7 @@ The research service never gets spending authority. It can produce candidate set
 
 ```text
 Connected wallet
-  -> Arbitrum Sepolia network check
+  -> Arbitrum Sepolia Testnet network check
   -> PolicyVault / ExecutionGuard / wrapper reads
   -> wallet-backed @iexec-nox/handle encryption
   -> PolicyVault.updatePolicyWithNox()
@@ -147,7 +147,7 @@ This matters architecturally because the UI now reflects the real execution boun
 The default path no longer uses synthetic market signals.
 
 - discovery can search by category and chain, such as meme tokens on Base, BNB, or Solana
-- the web app can inject an `Executable Arbitrum Lane` candidate set for WETH, ARB, and LINK when the live token and wrapper envs are present
+- the web app can inject an `Executable Arbitrum Testnet Lane` candidate set for WETH, ARB, and LINK when the live token and wrapper envs are present
 - discovered Base, BNB, and Solana candidates are research-only unless the full execution and Nox wrapper configuration exists
 - `apps/agent/services/market_data.py` fetches live market rows
 - `apps/agent/services/scoring.py` transforms live price, volume, rank, liquidity, and activity into heuristic signals
@@ -193,7 +193,7 @@ The confidential asset path begins after the public swap. The wrapper deposit is
 
 - the live trading path is intentionally one exact-input swap route, not a generic DEX aggregation engine
 - only the daily-budget and min-confidence policy fields are validated through the Nox proof path on-chain
-- v1 confidential wrapping is Arbitrum Sepolia-only
+- v1 confidential wrapping is Arbitrum Sepolia Testnet only
 - the currently deployed live wrapper set is WETH, ARB, and LINK
 - Base and BNB remain future execution expansion until official NoxCompute, gateway, subgraph, Solidity SDK resolver, contract deployment, router, and token allowlist support are available
 - Solana remains research-only unless a separate Solana wallet, program, routing, and confidential execution path is built
@@ -208,7 +208,7 @@ That is smaller than a full trading stack, but it is real and aligned with the p
 ### Required Components
 
 - owner/admin wallet connected in the browser
-- Arbitrum Sepolia RPC
+- Arbitrum Sepolia Testnet RPC
 - deployed `PolicyVault`
 - deployed `ExecutionGuard`
 - deployed concrete confidential wrapper for the selected ERC-20
@@ -231,7 +231,7 @@ That is smaller than a full trading stack, but it is real and aligned with the p
 ## NO MOCKED DATA VALIDATION CHECKLIST
 
 - [ ] Wallet badge shows a live connected address.
-- [ ] System status shows Arbitrum Sepolia readiness.
+- [ ] System status shows Arbitrum Sepolia Testnet readiness.
 - [ ] Policy save uses a live Nox client and live contract write.
 - [ ] Policy save uses the proof-backed `PolicyVault.updatePolicyWithNox()` path.
 - [ ] Research ranking comes from FastAPI, not `mock-agent.ts`.

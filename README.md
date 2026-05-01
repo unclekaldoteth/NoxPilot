@@ -9,7 +9,7 @@ NoxPilot is a hybrid hackathon MVP for confidential, bounded crypto execution.
 The judged/demo path is now live by default:
 
 - real wallet connection
-- Arbitrum Sepolia contract reads and writes
+- Arbitrum Sepolia Testnet contract reads and writes
 - wallet-backed Nox Handle encryption
 - live FastAPI research responses
 - live fetched market inputs
@@ -35,7 +35,12 @@ This repo is prepared for the DoraHacks iExec Vibe Coding Challenge submission.
 - Architecture and no-mock proof checklist: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
 - License and attribution baseline: [`LICENSE`](./LICENSE)
 
-Before final submission, fill the live app URL, Railway agent `/health` URL, and max-4-minute demo video URL in `SUBMISSION.md`.
+The current public deployment is:
+
+- Live app: <https://noxpilot-web.vercel.app/>
+- Research agent health: <https://noxpilot-agent-production.up.railway.app/health>
+
+Before final submission, fill the max-4-minute demo video URL in `SUBMISSION.md`.
 
 Judged live mode must use:
 
@@ -125,7 +130,7 @@ cp apps/agent/.env.example apps/agent/.env
 cp contracts/.env.example contracts/.env
 ```
 
-If you only want to deploy the contracts, `contracts/.env` is enough. The shipped template now pre-fills the public Arbitrum Sepolia RPC, Circle test USDC, and Uniswap Arbitrum Sepolia router so you only need to add `PRIVATE_KEY`, `OWNER_ADDRESS`, and `EXECUTION_WALLET_ADDRESS`.
+If you only want to deploy the contracts, `contracts/.env` is enough. The shipped template now pre-fills the public Arbitrum Sepolia Testnet RPC, Circle test USDC, and Uniswap Arbitrum Sepolia Testnet router so you only need to add `PRIVATE_KEY`, `OWNER_ADDRESS`, and `EXECUTION_WALLET_ADDRESS`.
 
 Required live env values:
 
@@ -196,7 +201,7 @@ set +a
 forge script script/DeployWrappers.s.sol:DeployWrappers --rpc-url "$ARBITRUM_SEPOLIA_RPC_URL" --broadcast -vv
 ```
 
-## Current Live Arbitrum Sepolia Deployment
+## Current Live Arbitrum Sepolia Testnet Deployment
 
 Snapshot updated April 29, 2026:
 
@@ -233,13 +238,13 @@ The guided UX is now grouped into three phases.
 
 1. Open `/demo`.
 2. Connect the wallet that owns the deployed `PolicyVault` and administers `ExecutionGuard`.
-3. Confirm the wallet is on Arbitrum Sepolia.
+3. Confirm the wallet is on Arbitrum Sepolia Testnet.
 4. Click `Verify live setup`.
 
 ### Phase 2: Set Policy & Research
 
 5. Fill the policy form and click `Encrypt & save policy on-chain`.
-6. Use `Executable Arbitrum Lane` for WETH, ARB, and LINK, or optionally run Base/BNB/Solana discovery as research-only expansion.
+6. Use `Executable Arbitrum Testnet Lane` for WETH, ARB, and LINK, or optionally run Base/BNB/Solana discovery as research-only expansion.
 7. Click `Trigger live research`.
 8. Click `Evaluate decision`.
 
@@ -289,7 +294,7 @@ Dev-only fallback:
 ### Prerequisites
 
 - MetaMask or another injected wallet
-- Arbitrum Sepolia selected in the wallet
+- Arbitrum Sepolia Testnet selected in the wallet
 - deployed `PolicyVault` and `ExecutionGuard`
 - deployed concrete confidential wrapper for the selected ERC-20
 - configured router, quoter, session-asset, and token addresses
@@ -316,9 +321,9 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 - The system status card reports whether contracts, Nox config, FastAPI agent, ChainGPT, wrappers, and trading status are actually ready.
 - The confidential policy card shows handle references only after wallet-backed encryption succeeds and the Nox-proofed policy write confirms.
 - The execution flow prepares a confidential confidence-approval handle before the swap and only proceeds after the live Handle gateway returns a valid boolean proof.
-- The discovery card separates the executable Arbitrum lane from Base/BNB/Solana research-only expansion.
+- The discovery card separates the executable Arbitrum testnet lane from Base/BNB/Solana research-only expansion.
 - The research card shows live source metadata, live market numbers, and whether the explanation came from ChainGPT or local fallback.
-- Session funding, swap execution, and settlement each require real Arbitrum Sepolia transactions.
+- Session funding, swap execution, and settlement each require real Arbitrum Sepolia Testnet transactions.
 - Wrapping and owner reveal require a deployed live wrapper and a real Nox handle operation; the confidential proof panel links wrapper and transaction state.
 - The activity timeline stays empty until real actions or live agent responses occur.
 - Research, decision, confidential position, settlement, and timeline state persist locally so a browser refresh does not erase the current demo run.
@@ -327,7 +332,7 @@ The scoring heuristics are simple, but the inputs are live: current price, 24h p
 ## NO MOCKED DATA VALIDATION CHECKLIST
 
 - [ ] A real wallet is connected.
-- [ ] The wallet is on Arbitrum Sepolia.
+- [ ] The wallet is on Arbitrum Sepolia Testnet.
 - [ ] `PolicyVault` and `ExecutionGuard` addresses are configured and reachable.
 - [ ] `Verify live setup` succeeds against the deployed contracts.
 - [ ] `Encrypt & save policy on-chain` succeeds through the wallet-backed Nox path.

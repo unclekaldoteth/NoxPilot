@@ -63,7 +63,7 @@ function buildExecutableLaneResponse(category: TokenDiscoveryCategory): TokenDis
         symbol: token.symbol,
         name: `${token.symbol} executable lane`,
         chain_id: "421614",
-        chain_label: "Arbitrum Sepolia",
+        chain_label: "Arbitrum Sepolia Testnet",
         chain_type: "evm",
         token_address: token.address,
         pair_address: null,
@@ -81,7 +81,7 @@ function buildExecutableLaneResponse(category: TokenDiscoveryCategory): TokenDis
         txns_24h: hint.txns,
         execution_status: support.supported ? "executable" : "needs_allowlist",
         execution_note: support.supported
-          ? "Executable now: token, route, ExecutionGuard allowlist, and confidential wrapper are configured on Arbitrum Sepolia."
+          ? "Executable now: token, route, ExecutionGuard allowlist, and confidential wrapper are configured on Arbitrum Sepolia Testnet."
           : support.reason ?? "Token needs complete route, allowlist, and wrapper config before execution.",
         risk_flags: support.supported ? [] : ["missing wrapper"]
       };
@@ -89,7 +89,7 @@ function buildExecutableLaneResponse(category: TokenDiscoveryCategory): TokenDis
 
   return {
     generatedAt: new Date().toISOString(),
-    source: "NoxPilot executable Arbitrum lane",
+    source: "NoxPilot executable Arbitrum testnet lane",
     category,
     chains: ["arbitrum-sepolia"],
     candidates
@@ -146,7 +146,7 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
           <div>
             <h3 className="text-lg font-semibold text-white">Discover Tokens</h3>
             <p className="text-sm leading-6 text-slate-300">
-              Search category-based tokens across Base, BNB, and Solana, or use the executable Arbitrum lane for live swap-ready candidates.
+              Search category-based tokens across Base, BNB, and Solana, or use the executable Arbitrum testnet lane for live swap-ready candidates.
             </p>
           </div>
         </div>
@@ -207,14 +207,14 @@ export function TokenDiscoveryCard({ interactive = false }: { interactive?: bool
 
           <div className="flex flex-col gap-3 sm:flex-row">
             <Button type="button" onClick={handleUseExecutableLane} variant="secondary">
-              Use Executable Arbitrum Lane
+              Use Executable Arbitrum Testnet Lane
             </Button>
             <Button type="button" onClick={handleDiscoverTokens} disabled={isPending || chains.length === 0}>
               {isPending ? "Discovering Tokens..." : "Discover Research-Only Tokens"}
             </Button>
           </div>
           <p className="text-xs leading-5 text-slate-500">
-            Arbitrum lane is the safe v1 execution path. Base, BNB, and Solana discovery expands research only until separate deployments and wrappers exist.
+            Arbitrum testnet lane is the safe v1 execution path. Base, BNB, and Solana discovery expands research only until separate deployments and wrappers exist.
           </p>
         </div>
       ) : null}

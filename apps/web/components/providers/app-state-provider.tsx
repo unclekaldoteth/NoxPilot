@@ -165,7 +165,7 @@ function createEmptyVault(address?: string | null, chainId = SUPPORTED_CHAIN_ID)
   return {
     walletAddress: address ?? "Wallet not connected",
     chainId,
-    networkLabel: "Arbitrum Sepolia",
+    networkLabel: "Arbitrum Sepolia Testnet",
     nativeBalanceEth: null,
     nativeBalanceUsd: null,
     totalBalanceUsd: 0,
@@ -373,7 +373,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       throw new Error(`${action} requires a connected wallet.`);
     }
     if (!networkSupported) {
-      throw new Error("Switch the wallet to Arbitrum Sepolia before continuing.");
+      throw new Error("Switch the wallet to Arbitrum Sepolia Testnet before continuing.");
     }
     if (!publicClient) {
       throw new Error("Public client is not ready yet.");
@@ -404,7 +404,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
 
     if (connectorChainId !== null && connectorChainId !== SUPPORTED_CHAIN_ID) {
       throw new Error(
-        `Switch the wallet to Arbitrum Sepolia (chain id ${SUPPORTED_CHAIN_ID}) before continuing. The connected wallet is currently on chain id ${connectorChainId}.`
+        `Switch the wallet to Arbitrum Sepolia Testnet (chain id ${SUPPORTED_CHAIN_ID}) before continuing. The connected wallet is currently on chain id ${connectorChainId}.`
       );
     }
 
@@ -418,7 +418,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       const details = error instanceof Error ? error.message : null;
       if (details?.includes("does not match the connection's chain")) {
         throw new Error(
-          `Switch the wallet to Arbitrum Sepolia (chain id ${SUPPORTED_CHAIN_ID}) before continuing.`
+          `Switch the wallet to Arbitrum Sepolia Testnet (chain id ${SUPPORTED_CHAIN_ID}) before continuing.`
         );
       }
       throw new Error(
@@ -679,7 +679,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       setVault({
         walletAddress: address,
         chainId: chainId || SUPPORTED_CHAIN_ID,
-        networkLabel: "Arbitrum Sepolia",
+        networkLabel: "Arbitrum Sepolia Testnet",
         nativeBalanceEth: vaultBalanceEth,
         nativeBalanceUsd: vaultBalanceUsd,
         totalBalanceUsd: vaultBalanceUsd ?? 0,
@@ -1286,7 +1286,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
       const nextEncryptedPolicy: EncryptedPolicyPayload = {
         policyId,
         encryptedAt: new Date().toISOString(),
-        network: "Arbitrum Sepolia",
+        network: "Arbitrum Sepolia Testnet",
         handleVersion: "nox-live-v1",
         publicSummary: {
           allowedTokens: sanitizedPolicy.allowedTokens,
@@ -2275,7 +2275,7 @@ export function AppStateProvider({ children }: PropsWithChildren) {
         "Wallet session updated",
         networkSupported
           ? "Connected wallet is available for the live judged flow."
-          : "Connected wallet is on the wrong network. Switch to Arbitrum Sepolia."
+          : "Connected wallet is on the wrong network. Switch to Arbitrum Sepolia Testnet."
       )
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
