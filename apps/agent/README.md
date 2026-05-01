@@ -63,9 +63,10 @@ Required/optional environment:
 - `POST /research/rank`
 - `POST /research/discover`
 - `POST /research/explain`
+- `POST /research/market-snapshot`
 - `POST /research/mock-market`
 
-`/research/mock-market` keeps its legacy name for compatibility, but in the live default path it returns fetched live market snapshots rather than synthetic data.
+`/research/market-snapshot` is the canonical live snapshot route. `/research/mock-market` remains as a legacy compatibility alias, but in live mode it still returns fetched market snapshots rather than synthetic data.
 
 ### `GET /health`
 
@@ -242,7 +243,7 @@ Response:
 }
 ```
 
-### `POST /research/mock-market`
+### `POST /research/market-snapshot`
 
 Request:
 
@@ -251,6 +252,8 @@ Request:
   "whitelist": ["ETH", "ARB", "USDC", "LINK"]
 }
 ```
+
+`POST /research/mock-market` accepts the same payload and returns the same shape for old clients only.
 
 Response shape:
 

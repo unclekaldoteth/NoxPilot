@@ -2,6 +2,7 @@
   "name": "noxpilot",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "packageManager": "pnpm@9.12.3",
   "scripts": {
     "dev:web": "pnpm --filter @noxpilot/web dev",

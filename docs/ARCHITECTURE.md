@@ -61,6 +61,9 @@ Web app
   -> /api/research/health
   -> FastAPI /health
   -> agent + ChainGPT readiness state
+  -> /api/research/market-snapshot
+  -> FastAPI /research/market-snapshot
+  -> live CoinGecko market snapshots
   -> /api/research/discover
   -> DexScreener / discovery provider
   -> /api/research/rank
@@ -148,6 +151,7 @@ The default path no longer uses synthetic market signals.
 - discovered Base, BNB, and Solana candidates are research-only unless the full execution and Nox wrapper configuration exists
 - `apps/agent/services/market_data.py` fetches live market rows
 - `apps/agent/services/scoring.py` transforms live price, volume, rank, liquidity, and activity into heuristic signals
+- `/research/market-snapshot` exposes live market snapshots for inspection
 - `/research/rank` returns a ranked shortlist plus a best candidate
 - `/research/explain` explains the live-ranked candidate, using ChainGPT when configured
 - `/health` reports market-data source, discovery source, ChainGPT provider/model, and whether the server-side ChainGPT key is configured without exposing the key

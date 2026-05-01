@@ -116,3 +116,4 @@ After deploy, verify:
 4. System health shows `Research agent reachable`.
 5. System health shows `ChainGPT analyst active` when `CHAINGPT_API_KEY` is set on the agent.
 6. Research actions return `agent` source (not `mock`) when `AGENT_BASE_URL` is configured.
+7. Copy the final web URL and agent `/health` URL into [`../SUBMISSION.md`](../SUBMISSION.md) before publishing the DoraHacks/X submission.

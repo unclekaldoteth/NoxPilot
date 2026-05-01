@@ -1,1 +1,1 @@
-export { POST } from "../mock-market/route";
+export { POST } from "../market-snapshot/route";

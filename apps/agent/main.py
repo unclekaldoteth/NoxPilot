@@ -126,8 +126,7 @@ async def research_explain(payload: ResearchExplainRequest) -> ResearchExplainRe
     )
 
 
-@app.post("/research/mock-market", response_model=MockMarketResponse)
-async def research_mock_market(payload: MockMarketRequest) -> MockMarketResponse:
+async def _market_snapshot(payload: MockMarketRequest) -> MockMarketResponse:
     try:
         signals = await load_market_snapshots(payload.whitelist)
         return MockMarketResponse(generatedAt=utc_now_iso(), signals=signals)
@@ -138,3 +137,15 @@ async def research_mock_market(payload: MockMarketRequest) -> MockMarketResponse
             status_code=503,
             detail="Live market data is unavailable for snapshot inspection.",
         ) from error
+
+
+@app.post("/research/market-snapshot", response_model=MockMarketResponse)
+async def research_market_snapshot(payload: MockMarketRequest) -> MockMarketResponse:
+    return await _market_snapshot(payload)
+
+
+@app.post("/research/mock-market", response_model=MockMarketResponse)
+async def research_mock_market(payload: MockMarketRequest) -> MockMarketResponse:
+    # Legacy compatibility route. The default live path still fetches real market
+    # snapshots; synthetic data only exists in explicit frontend dev-mock mode.
+    return await _market_snapshot(payload)

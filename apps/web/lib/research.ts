@@ -121,7 +121,7 @@ export async function fetchResearchExplanation(
 }
 
 export async function fetchMarketSnapshot(whitelist: string[]): Promise<ResearchFetchResult<ResearchMockMarketResponse>> {
-  const response = await fetch("/api/research/market", {
+  const response = await fetch("/api/research/market-snapshot", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"

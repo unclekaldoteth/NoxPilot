@@ -2,6 +2,7 @@
   "name": "@noxpilot/web",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "predev": "pnpm --filter @noxpilot/nox-sdk run build",
     "prebuild": "pnpm --filter @noxpilot/nox-sdk run build",

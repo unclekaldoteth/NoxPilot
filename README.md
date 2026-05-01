@@ -23,6 +23,25 @@ The operator UX now follows one guided path:
 - a shared `Next action` banner keeps the current live task obvious on both `/dashboard` and `/demo`
 - readiness now checks the FastAPI agent, ChainGPT configuration, wrapper config, and USDC session funding state
 
+## Hackathon Submission Readiness
+
+This repo is prepared for the DoraHacks iExec Vibe Coding Challenge submission.
+
+- Submission checklist and X/Twitter draft: [`SUBMISSION.md`](./SUBMISSION.md)
+- Required iExec/Nox developer feedback: [`feedback.md`](./feedback.md)
+- Demo recording guide: [`docs/DEMO_SCRIPT.md`](./docs/DEMO_SCRIPT.md)
+- Architecture and no-mock proof checklist: [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md)
+- License and attribution baseline: [`LICENSE`](./LICENSE)
+
+Before final submission, fill the live app URL, Railway agent `/health` URL, and max-4-minute demo video URL in `SUBMISSION.md`.
+
+Judged live mode must use:
+
+```bash
+NEXT_PUBLIC_APP_MODE=live
+NEXT_PUBLIC_ENABLE_DEV_MOCKS=false
+```
+
 ## Guided UX Flow
 
 ```mermaid
@@ -82,6 +101,8 @@ That boundary is the trust model.
   /nox-sdk    Wrapper around @iexec-nox/handle
   /ui         Reusable UI primitives
 /docs         PRD, architecture, and demo script
+feedback.md   iExec/Nox developer feedback required by the challenge
+SUBMISSION.md final DoraHacks submission checklist and social post draft
 ```
 
 ## Local Setup
@@ -177,13 +198,17 @@ forge script script/DeployWrappers.s.sol:DeployWrappers --rpc-url "$ARBITRUM_SEP
 
 Snapshot updated April 29, 2026:
 
-- `PolicyVault`: `0xAfF2d2794cFE82f75086FD715BFd198585b69b81`
-- `ExecutionGuard`: `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29`
-- `DemoArbToken (ARB)`: `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E`
-- `ARB/USDC pool`: `0xB85cf4A6d305e8c19eC476C3187db949D665C43b`
-- `NoxPilotConfidentialERC20Wrapper (WETH)`: `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9`
-- `NoxPilotConfidentialERC20Wrapper (ARB)`: `0x18C35645080A279170471b0bfCbD888946F3D674`
-- `NoxPilotConfidentialERC20Wrapper (LINK)`: `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5`
+| Component | Address | Explorer |
+|---|---|---|
+| `PolicyVault` | `0xAfF2d2794cFE82f75086FD715BFd198585b69b81` | [Arbiscan](https://sepolia.arbiscan.io/address/0xAfF2d2794cFE82f75086FD715BFd198585b69b81) |
+| `ExecutionGuard` | `0xa1a12b3C04466a2480A562f9858eb4188EFB0a29` | [Arbiscan](https://sepolia.arbiscan.io/address/0xa1a12b3C04466a2480A562f9858eb4188EFB0a29) |
+| `DemoArbToken (ARB)` | `0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E` | [Arbiscan](https://sepolia.arbiscan.io/address/0xAc30C815749513fFC56B2705f8A8408D1a1cEf2E) |
+| `ARB/USDC pool` | `0xB85cf4A6d305e8c19eC476C3187db949D665C43b` | [Arbiscan](https://sepolia.arbiscan.io/address/0xB85cf4A6d305e8c19eC476C3187db949D665C43b) |
+| `NoxPilotConfidentialERC20Wrapper (WETH)` | `0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9` | [Arbiscan](https://sepolia.arbiscan.io/address/0x18B1973a26f91b72E6157465a9ba4E207C2EE0F9) |
+| `NoxPilotConfidentialERC20Wrapper (ARB)` | `0x18C35645080A279170471b0bfCbD888946F3D674` | [Arbiscan](https://sepolia.arbiscan.io/address/0x18C35645080A279170471b0bfCbD888946F3D674) |
+| `NoxPilotConfidentialERC20Wrapper (LINK)` | `0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5` | [Arbiscan](https://sepolia.arbiscan.io/address/0x9a0532E79aA04f2E36D4199FD6cDf69d09729bf5) |
+
+Key deployment transactions are listed in [`SUBMISSION.md`](./SUBMISSION.md).
 
 Current full confidential path coverage:
 

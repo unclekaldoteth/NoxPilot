@@ -20,6 +20,33 @@ Open:
 - `/dashboard`
 - `/demo`
 
+## DoraHacks Submission Recording
+
+Keep the public demo video under 4 minutes.
+
+Before recording:
+
+- set `NEXT_PUBLIC_APP_MODE=live`
+- set `NEXT_PUBLIC_ENABLE_DEV_MOCKS=false`
+- confirm the web app URL is public
+- confirm the FastAPI agent `/health` URL is public
+- confirm `/health` reports ChainGPT configured when presenting the ChainGPT sponsor path
+- prefer WETH or LINK for the cleanest live wrapper story; ARB is supported but uses the repo's deployed testnet `DemoArbToken`
+
+Record these proof points:
+
+- live wallet address and Arbitrum Sepolia network
+- `Verify live setup` succeeding against deployed contracts
+- Nox policy encryption and `PolicyVault.updatePolicyWithNox()`
+- FastAPI research result with live market timestamp
+- ChainGPT provider badge when configured
+- guarded swap transaction
+- confidential wrapper transaction
+- owner-only reveal through the Nox handle client
+- settlement transaction
+
+After recording, update `SUBMISSION.md` with the live app URL, agent health URL, and video URL.
+
 ## Current Live Deployment
 
 Arbitrum Sepolia snapshot updated April 29, 2026:
@@ -145,6 +172,10 @@ Say:
 Say:
 
 > NoxPilot gives AI bounded execution authority, then turns the acquired ERC-20 position into a confidential asset instead of leaving every post-trade balance public.
+
+## X / Twitter Submission
+
+Use the draft in `SUBMISSION.md`. It already includes the project description, GitHub link, and placeholders for the video and live app URLs required for final submission.
 
 ## End-to-End Live Validation
 

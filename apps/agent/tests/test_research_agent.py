@@ -13,6 +13,7 @@ from schemas import Recommendation, TokenDiscoveryCandidate
 from services.chaingpt import chaingpt_health
 from services.explainer import LOCAL_EXPLAINER_PROVIDER, explain_recommendation_with_chain_gpt
 from services.scoring import build_discovered_recommendation
+from main import app
 
 
 class ResearchAgentTests(unittest.TestCase):
@@ -71,6 +72,12 @@ class ResearchAgentTests(unittest.TestCase):
 
         self.assertEqual(response.provider, LOCAL_EXPLAINER_PROVIDER)
         self.assertIn("LINK", response.summary)
+
+    def test_live_market_snapshot_route_keeps_legacy_alias(self) -> None:
+        paths = {route.path for route in app.routes}
+
+        self.assertIn("/research/market-snapshot", paths)
+        self.assertIn("/research/mock-market", paths)
 
 
 if __name__ == "__main__":
