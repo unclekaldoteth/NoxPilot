@@ -9,8 +9,10 @@ remappings = [
   "@openzeppelin/contracts/=../node_modules/@openzeppelin/contracts/",
   "encrypted-types/=../node_modules/encrypted-types/"
 ]
+# Pin a portable compiler version so CI/Railway runners do not depend on a
+# machine-local solc path such as /opt/homebrew/bin/solc.
 auto_detect_solc = false
-solc = "/opt/homebrew/bin/solc"
+solc = "0.8.33"
 optimizer = true
 optimizer_runs = 200
 via_ir = true

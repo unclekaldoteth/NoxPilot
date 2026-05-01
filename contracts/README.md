@@ -230,7 +230,7 @@ You still need to supply the deployed `NEXT_PUBLIC_POLICY_VAULT_ADDRESS` and `NE
 
 What was hardened:
 
-- confirmed the package is Foundry-based and compiles locally through the system `solc`
+- confirmed the package is Foundry-based and compiles through Foundry's pinned `solc` 0.8.33 compiler
 - tightened `PolicyVault` session validation so zero-funded, zero-trade, zero-expiry, or duplicate active sessions are rejected
 - added a real Nox-native `updatePolicyWithNox()` path so the confidential daily-budget and min-confidence handles enter the vault through `Nox.fromExternal(...)`
 - kept `policyWhitelistRoot()` and `policyMetadataUri()` helpers so downstream integrations can reference the vault policy cleanly
